@@ -3,24 +3,26 @@ const ctx = canvas.getContext('2d');
 const scoreElement = document.getElementById('scoreVal');
 const highScoreElement = document.getElementById('highScoreVal');
 
+// تم حذف سطر restartBtn نهائياً كما طلبت
+
 // 1. الإعدادات ونظام المستويات
 const ROWS = 8;
 const COLS = 8;
 let cellSize = 0;
 let grid = [];
 let score = 0;
-let level = 1; 
+let currentLevel = 1; // يبدأ من 1 ويصل إلى 5000
 let highScore = localStorage.getItem('blockBlastHighScore') || 0;
 
-// أشكال متنوعة (تزداد صعوبتها تدريجياً)
 const SHAPES = [
-    { matrix: [[1, 1, 1, 1]], color: '#2dd4bf' }, // خط
-    { matrix: [[1, 1], [1, 1]], color: '#fbbf24' }, // مربع
-    { matrix: [[0, 1, 0], [1, 1, 1]], color: '#a855f7' }, // حرف T
-    { matrix: [[1, 1, 1], [1, 0, 0]], color: '#f87171' }, // حرف L
-    { matrix: [[1, 1, 0], [0, 1, 1]], color: '#4ade80' }, // شكل Z
-    { matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: '#ec4899' }, // مربع كبير (صعب)
-    { matrix: [[1]], color: '#94a3b8' } // نقطة واحدة
+    { matrix: [[1, 1, 1, 1]], color: '#2dd4bf' },
+    { matrix: [[1, 1], [1, 1]], color: '#fbbf24' },
+    { matrix: [[0, 1, 0], [1, 1, 1]], color: '#a855f7' },
+    { matrix: [[1, 1, 1], [1, 0, 0]], color: '#f87171' },
+    { matrix: [[1, 1, 0], [0, 1, 1]], color: '#4ade80' },
+    // أشكال إضافية تظهر في المستويات المتقدمة لزيادة الصعوبة
+    { matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: '#ec4899' }, 
+    { matrix: [[1]], color: '#94a3b8' }
 ];
 
 let availablePieces = [];
@@ -47,7 +49,7 @@ function initGame() {
 
     grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
     score = 0;
-    level = 1;
+    currentLevel = 1;
     updateScoreUI();
     spawnPieces();
     render();
@@ -56,9 +58,10 @@ function initGame() {
 function spawnPieces() {
     availablePieces = [];
     for (let i = 0; i < 3; i++) {
-        // منطق الصعوبة: في المستويات الأعلى تظهر أشكال أصعب
-        let range = Math.min(SHAPES.length, 4 + Math.floor(level / 5));
-        const shape = SHAPES[Math.floor(Math.random() * range)];
+        // منطق الصعوبة التدريجي: كلما زاد المستوى تزيد احتمالية اختيار أشكال أعقد
+        let difficultyFactor = Math.min(SHAPES.length, 5 + Math.floor(currentLevel / 10));
+        const shape = SHAPES[Math.floor(Math.random() * difficultyFactor)];
+        
         availablePieces.push({
             ...shape,
             x: (canvas.width / 3) * i + 15,
@@ -76,7 +79,7 @@ function drawGrid() {
         for (let c = 0; c < COLS; c++) {
             const x = c * cellSize;
             const y = r * cellSize;
-            ctx.fillStyle = "#1e293b";
+            ctx.fillStyle = "#1e293b"; 
             drawRoundedRect(x + 2, y + 2, cellSize - 4, cellSize - 4, 6, true);
             ctx.strokeStyle = "rgba(255, 255, 255, 0.03)";
             ctx.stroke();
@@ -102,10 +105,11 @@ function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawGrid();
     
-    // رسم مستوى اللاعب في أعلى الكانفاس
-    ctx.fillStyle = "white";
-    ctx.font = "bold 16px Arial";
-    ctx.fillText("Level: " + level, 10, canvas.height - 10);
+    // إظهار رقم المستوى في الأعلى
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 20px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("LEVEL " + currentLevel, canvas.width / 2, canvas.height - 20);
 
     if (draggingPiece) {
         const gCol = Math.round(draggingPiece.x / cellSize);
@@ -158,7 +162,7 @@ function endDrag() {
         // فحص الخسارة بعد كل حركة
         if (!checkAnyMovePossible()) {
             setTimeout(() => {
-                alert("خسرت! لا يوجد مكان للقطع المتبقية. ستبدأ من جديد.");
+                alert("انتهت اللعبة! وصلت للمستوى: " + currentLevel);
                 initGame();
             }, 300);
         }
@@ -171,8 +175,11 @@ function endDrag() {
     render();
 }
 
+// دالة فحص إمكانية الحركة (منطق الخسارة)
 function checkAnyMovePossible() {
     const activePieces = availablePieces.filter(p => p.active);
+    if (activePieces.length === 0) return true;
+
     for (let piece of activePieces) {
         for (let r = 0; r <= ROWS - piece.matrix.length; r++) {
             for (let c = 0; c <= COLS - piece.matrix[0].length; c++) {
@@ -207,8 +214,12 @@ function checkLines() {
         tc.forEach(c => { for (let r = 0; r < ROWS; r++) grid[r][c] = 0; });
         score += (tr.length + tc.length) * 100;
         
-        // رفع المستوى كل 500 نقطة
-        level = Math.floor(score / 500) + 1;
+        // رفع المستوى تدريجياً بناءً على النقاط (كل 500 نقطة مستوى جديد)
+        let newLevel = Math.floor(score / 500) + 1;
+        if (newLevel > currentLevel && currentLevel < 5000) {
+            currentLevel = newLevel;
+            playSfx(1000, 'sine', 0.2); // صوت عند تجاوز المستوى
+        }
         
         updateScoreUI();
         playSfx(800, 'square', 0.2);
@@ -222,7 +233,6 @@ function updateScoreUI() {
     highScoreElement.innerText = highScore; 
 }
 
-// التحكم بالسحب
 function startDrag(e) {
     const rect = canvas.getBoundingClientRect();
     const x = (e.clientX || e.touches[0].clientX) - rect.left;
@@ -251,4 +261,5 @@ window.addEventListener('touchend', endDrag);
 canvas.addEventListener('mousedown', startDrag);
 window.addEventListener('mousemove', doDrag);
 window.addEventListener('mouseup', endDrag);
+
 window.onload = initGame;
