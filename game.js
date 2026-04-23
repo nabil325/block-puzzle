@@ -2,17 +2,16 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const scoreElement = document.getElementById('scoreVal');
 const highScoreElement = document.getElementById('highScoreVal');
-const levelElement = document.getElementById('levelVal');
 
+// الإعدادات الأساسية
 const ROWS = 8;
 const COLS = 8;
 let cellSize = 0;
 let grid = [];
 let score = 0;
-let currentLevel = 1;
 let highScore = localStorage.getItem('blockBlastHighScore') || 0;
 
-// إضافة أشكال متنوعة وجديدة (أشكال كبيرة، صغيرة، ومعقدة)
+// إضافة أشكال متنوعة وجديدة
 const SHAPES = [
     { matrix: [[1, 1, 1, 1]], color: '#2dd4bf' }, // خط أفقي 4
     { matrix: [[1], [1], [1], [1]], color: '#2dd4bf' }, // خط عمودي 4
@@ -33,6 +32,7 @@ let draggingPiece = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 
+// نظام الصوت
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playSfx(freq, type, dur) {
     if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -44,6 +44,7 @@ function playSfx(freq, type, dur) {
     o.start(); o.stop(audioCtx.currentTime + dur);
 }
 
+// بدء اللعبة
 function initGame() {
     const containerWidth = Math.min(window.innerWidth - 40, 400); 
     canvas.width = containerWidth;
@@ -55,7 +56,7 @@ function initGame() {
     render();
 }
 
-// العودة لنظام الـ 3 قطع كما في طلبك
+// توليد 3 قطع فقط
 function spawnPieces() {
     availablePieces = [];
     for (let i = 0; i < 3; i++) {
@@ -72,16 +73,20 @@ function spawnPieces() {
     }
 }
 
+// رسم الشبكة والمربعات
 function drawGrid() {
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             const x = c * cellSize;
             const y = r * cellSize;
+            
+            // رسم شبكة المربعات (الخلفية)
             ctx.fillStyle = "#1e293b"; 
             ctx.beginPath();
             ctx.roundRect(x + 2, y + 2, cellSize - 4, cellSize - 4, 8);
             ctx.fill();
 
+            // رسم القطع الموجودة فعلياً
             if (grid[r][c] !== 0) {
                 ctx.shadowBlur = 15;
                 ctx.shadowColor = grid[r][c];
@@ -93,7 +98,7 @@ function drawGrid() {
             }
         }
     }
-    // الخط الفاصل بين الرقعة والقطع
+    // الخط الفاصل
     ctx.strokeStyle = "rgba(148, 163, 184, 0.2)";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -189,7 +194,6 @@ function checkLines() {
         tr.forEach(r => grid[r].fill(0));
         tc.forEach(c => { for (let r = 0; r < ROWS; r++) grid[r][c] = 0; });
         score += (tr.length + tc.length) * 100;
-        if (score > highScore) currentLevel++;
         updateScoreUI();
         playSfx(800, 'square', 0.2);
     }
@@ -198,8 +202,8 @@ function checkLines() {
 function checkAnyMovePossible() {
     const activePieces = availablePieces.filter(p => p.active);
     for (let piece of activePieces) {
-        for (let r = 0; r < ROWS; r++) {
-            for (let c = 0; c < COLS; c++) {
+        for (let r = 0; r <= ROWS - piece.matrix.length; r++) {
+            for (let c = 0; c <= COLS - piece.matrix[0].length; c++) {
                 if (canPlace(piece, r, c)) return true;
             }
         }
@@ -212,14 +216,19 @@ function updateScoreUI() {
     highScore = Math.max(score, highScore);
     localStorage.setItem('blockBlastHighScore', highScore);
     highScoreElement.innerText = highScore;
-    levelElement.innerText = currentLevel;
 }
 
 function showGameOver() {
     const modal = document.getElementById('gameOverModal');
-    document.getElementById('finalLevelDisplay').innerText = "المستوى: " + currentLevel;
-    document.getElementById('finalScoreDisplay').innerText = score + " 👑";
+    if (document.getElementById('finalScoreDisplay')) {
+        document.getElementById('finalScoreDisplay').innerText = score + " 👑";
+    }
     modal.style.display = 'flex';
+}
+
+function restartGame() {
+    document.getElementById('gameOverModal').style.display = 'none';
+    initGame();
 }
 
 function startDrag(e) {
