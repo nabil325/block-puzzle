@@ -4,7 +4,7 @@ const scoreElement = document.getElementById('scoreVal');
 const highScoreElement = document.getElementById('highScoreVal');
 const levelElement = document.getElementById('levelVal');
 
-// 1. الإعدادات الأساسية
+// 1. الإعدادات الأساسية - توسيع الرقعة لتأخذ مساحة أكبر
 const ROWS = 8;
 const COLS = 8;
 let cellSize = 0;
@@ -14,13 +14,13 @@ let currentLevel = 1;
 let highScore = localStorage.getItem('blockBlastHighScore') || 0;
 
 const SHAPES = [
-    { matrix: [[1, 1, 1, 1]], color: '#2dd4bf' }, // خط
-    { matrix: [[1, 1], [1, 1]], color: '#fbbf24' }, // مربع
-    { matrix: [[0, 1, 0], [1, 1, 1]], color: '#a855f7' }, // حرف T
-    { matrix: [[1, 1, 1], [1, 0, 0]], color: '#f87171' }, // حرف L
-    { matrix: [[1, 1, 0], [0, 1, 1]], color: '#4ade80' }, // حرف Z
-    { matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: '#ec4899' }, // مربع كبير
-    { matrix: [[1]], color: '#94a3b8' } // نقطة
+    { matrix: [[1, 1, 1, 1]], color: '#2dd4bf' }, 
+    { matrix: [[1, 1], [1, 1]], color: '#fbbf24' }, 
+    { matrix: [[0, 1, 0], [1, 1, 1]], color: '#a855f7' }, 
+    { matrix: [[1, 1, 1], [1, 0, 0]], color: '#f87171' }, 
+    { matrix: [[1, 1, 0], [0, 1, 1]], color: '#4ade80' }, 
+    { matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: '#ec4899' }, 
+    { matrix: [[1]], color: '#94a3b8' } 
 ];
 
 let availablePieces = [];
@@ -40,74 +40,72 @@ function playSfx(freq, type, dur) {
     o.start(); o.stop(audioCtx.currentTime + dur);
 }
 
-// بدء اللعبة
+// بدء اللعبة وتوسيع حجم الكانفاس
 function initGame() {
-    const containerWidth = Math.min(window.innerWidth - 80, 380); 
+    const containerWidth = Math.min(window.innerWidth - 40, 420); 
     canvas.width = containerWidth;
-    canvas.height = containerWidth + 180; 
+    canvas.height = containerWidth + 220; // زيادة الارتفاع لاستيعاب القطع والخط الفاصل
     cellSize = containerWidth / COLS;
 
     grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-    score = 0;
     updateScoreUI();
     spawnPieces();
     render();
 }
 
-// توليد القطع
+// توليد 4 قطع بدلاً من 3 لزيادة الخيارات
 function spawnPieces() {
     availablePieces = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) { // إضافة قطعة رابعة
         let range = Math.min(SHAPES.length, 4 + Math.floor(currentLevel / 50));
         const shape = SHAPES[Math.floor(Math.random() * range)];
         availablePieces.push({
             ...shape,
-            x: (canvas.width / 3) * i + 15,
-            y: canvas.width + 40,
-            originalX: (canvas.width / 3) * i + 15,
-            originalY: canvas.width + 40,
-            scale: 0.5,
+            x: (canvas.width / 4) * i + 10,
+            y: canvas.width + 60, // إزاحة للأسفل لترك مساحة للخط
+            originalX: (canvas.width / 4) * i + 10,
+            originalY: canvas.width + 60,
+            scale: 0.45,
             active: true
         });
     }
 }
 
-// رسم الشبكة الخلفية والمربعات المستقرة
 function drawGrid() {
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             const x = c * cellSize;
             const y = r * cellSize;
-            
-            // رسم المربع الفارغ (الشبكة)
             ctx.fillStyle = "#1e293b"; 
             ctx.beginPath();
-            ctx.roundRect(x + 2, y + 2, cellSize - 4, cellSize - 4, 6);
+            ctx.roundRect(x + 2, y + 2, cellSize - 4, cellSize - 4, 8);
             ctx.fill();
-            
-            // رسم حدود خفيفة للمربع لتعزيز شكل الشبكة
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.02)";
-            ctx.stroke();
 
-            // رسم المربعات المملوءة بالقطع
             if (grid[r][c] !== 0) {
-                ctx.shadowBlur = 10;
+                ctx.shadowBlur = 15;
                 ctx.shadowColor = grid[r][c];
                 ctx.fillStyle = grid[r][c];
                 ctx.beginPath();
-                ctx.roundRect(x + 3, y + 3, cellSize - 6, cellSize - 6, 6);
+                ctx.roundRect(x + 3, y + 3, cellSize - 6, cellSize - 6, 8);
                 ctx.fill();
                 ctx.shadowBlur = 0;
             }
         }
     }
+
+    // رسم الخط الفاصل الأنيق بين الرقعة والقطع
+    ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(20, canvas.width + 25);
+    ctx.lineTo(canvas.width - 20, canvas.width + 25);
+    ctx.stroke();
 }
 
 function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawGrid(); // استدعاء رسم الشبكة
+    drawGrid();
     
-    // رسم خيال القطعة عند السحب (Ghost Piece)
     if (draggingPiece) {
         const gCol = Math.round(draggingPiece.x / cellSize);
         const gRow = Math.round(draggingPiece.y / cellSize);
@@ -118,7 +116,7 @@ function render() {
                     if (cell) {
                         ctx.fillStyle = draggingPiece.color;
                         ctx.beginPath();
-                        ctx.roundRect((gCol+c)*cellSize+4, (gRow+r)*cellSize+4, cellSize-8, cellSize-8, 4);
+                        ctx.roundRect((gCol+c)*cellSize+4, (gRow+r)*cellSize+4, cellSize-8, cellSize-8, 6);
                         ctx.fill();
                     }
                 });
@@ -127,7 +125,6 @@ function render() {
         }
     }
 
-    // رسم القطع الثلاث المتاحة بالأسفل
     availablePieces.forEach(piece => {
         if (!piece.active) return;
         const s = piece.scale * cellSize;
@@ -136,7 +133,7 @@ function render() {
                 if (cell) {
                     ctx.fillStyle = piece.color;
                     ctx.beginPath();
-                    ctx.roundRect(piece.x + c * s, piece.y + r * s, s - 2, s - 2, 4);
+                    ctx.roundRect(piece.x + c * s, piece.y + r * s, s - 2, s - 2, 5);
                     ctx.fill();
                 }
             });
@@ -144,6 +141,7 @@ function render() {
     });
 }
 
+// باقي منطق اللعبة (endDrag, checkLines, etc.) يبقى كما هو مع تحديث التنسيق
 function endDrag() {
     if (!draggingPiece) return;
     const gCol = Math.round(draggingPiece.x / cellSize);
@@ -167,36 +165,10 @@ function endDrag() {
     } else {
         draggingPiece.x = draggingPiece.originalX;
         draggingPiece.y = draggingPiece.originalY;
-        draggingPiece.scale = 0.5;
+        draggingPiece.scale = 0.45;
     }
     draggingPiece = null;
     render();
-}
-
-function checkAnyMovePossible() {
-    const activePieces = availablePieces.filter(p => p.active);
-    for (let piece of activePieces) {
-        for (let r = 0; r <= ROWS - piece.matrix.length; r++) {
-            for (let c = 0; c <= COLS - piece.matrix[0].length; c++) {
-                if (canPlace(piece, r, c)) return true;
-            }
-        }
-    }
-    return false;
-}
-
-function showGameOver() {
-    const modal = document.getElementById('gameOverModal');
-    if (document.getElementById('finalLevelDisplay')) 
-        document.getElementById('finalLevelDisplay').innerText = "المستوى: " + currentLevel;
-    if (document.getElementById('finalScoreDisplay')) 
-        document.getElementById('finalScoreDisplay').innerText = score + " 👑";
-    modal.style.display = 'flex';
-}
-
-function restartGame() {
-    document.getElementById('gameOverModal').style.display = 'none';
-    initGame();
 }
 
 function canPlace(piece, row, col) {
@@ -223,15 +195,34 @@ function checkLines() {
         tr.forEach(r => grid[r].fill(0));
         tc.forEach(c => { for (let r = 0; r < ROWS; r++) grid[r][c] = 0; });
         score += (tr.length + tc.length) * 100;
-
-        if (score > highScore) {
-            currentLevel++;
-            playSfx(1000, 'sine', 0.2);
-        }
-
+        if (score > highScore) currentLevel++;
         updateScoreUI();
         playSfx(800, 'square', 0.2);
     }
+}
+
+function checkAnyMovePossible() {
+    const activePieces = availablePieces.filter(p => p.active);
+    for (let piece of activePieces) {
+        for (let r = 0; r <= ROWS - piece.matrix.length; r++) {
+            for (let c = 0; c <= COLS - piece.matrix[0].length; c++) {
+                if (canPlace(piece, r, c)) return true;
+            }
+        }
+    }
+    return false;
+}
+
+function showGameOver() {
+    const modal = document.getElementById('gameOverModal');
+    if (document.getElementById('finalLevelDisplay')) document.getElementById('finalLevelDisplay').innerText = "المستوى: " + currentLevel;
+    if (document.getElementById('finalScoreDisplay')) document.getElementById('finalScoreDisplay').innerText = score + " 👑";
+    modal.style.display = 'flex';
+}
+
+function restartGame() {
+    document.getElementById('gameOverModal').style.display = 'none';
+    initGame();
 }
 
 function updateScoreUI() { 
@@ -260,7 +251,7 @@ function doDrag(e) {
     if (!draggingPiece) return;
     const rect = canvas.getBoundingClientRect();
     draggingPiece.x = ((e.clientX || e.touches[0].clientX) - rect.left) - dragOffsetX;
-    draggingPiece.y = ((e.clientY || e.touches[0].clientY) - rect.top) - dragOffsetY - 70;
+    draggingPiece.y = ((e.clientY || e.touches[0].clientY) - rect.top) - dragOffsetY - 80;
     render();
 }
 
