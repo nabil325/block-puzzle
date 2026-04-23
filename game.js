@@ -3,7 +3,7 @@ const ctx = canvas.getContext('2d');
 const scoreElement = document.getElementById('scoreVal');
 const highScoreElement = document.getElementById('highScoreVal');
 
-// الإعدادات الأساسية لرقعة اللعب
+// إعدادات الرقعة (8x8)
 const ROWS = 8;
 const COLS = 8;
 let cellSize = 0;
@@ -11,19 +11,18 @@ let grid = [];
 let score = 0;
 let highScore = localStorage.getItem('blockBlastHighScore') || 0;
 
-// مجموعة متنوعة من الأشكال (أشكال ضخمة، صغيرة، ومعقدة)
+// أشكال متنوعة (كبيرة، صغيرة، ومعقدة)
 const SHAPES = [
-    { matrix: [[1, 1, 1, 1]], color: '#2dd4bf' }, // خط أفقي 4
-    { matrix: [[1], [1], [1], [1]], color: '#2dd4bf' }, // خط عمودي 4
-    { matrix: [[1, 1], [1, 1]], color: '#fbbf24' }, // مربع 2x2
-    { matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: '#ec4899' }, // مربع عملاق 3x3
-    { matrix: [[0, 1, 0], [1, 1, 1]], color: '#a855f7' }, // حرف T
-    { matrix: [[1, 1, 1], [1, 0, 0]], color: '#f87171' }, // حرف L كبير
-    { matrix: [[1, 1], [1, 0]], color: '#f87171' }, // زاوية صغيرة
-    { matrix: [[1, 1, 0], [0, 1, 1]], color: '#4ade80' }, // حرف Z
-    { matrix: [[1, 1, 1]], color: '#60a5fa' }, // خط صغير 3
-    { matrix: [[1]], color: '#94a3b8' }, // نقطة واحدة
-    { matrix: [[1, 0, 0], [1, 0, 0], [1, 1, 1]], color: '#818cf8' } // حرف L ضخم
+    { matrix: [[1, 1, 1, 1]], color: '#2dd4bf' },
+    { matrix: [[1, 1], [1, 1]], color: '#fbbf24' },
+    { matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: '#ec4899' }, // مربع عملاق
+    { matrix: [[0, 1, 0], [1, 1, 1]], color: '#a855f7' },
+    { matrix: [[1, 1, 1], [1, 0, 0]], color: '#f87171' },
+    { matrix: [[1, 1], [1, 0]], color: '#f87171' },
+    { matrix: [[1, 1, 0], [0, 1, 1]], color: '#4ade80' },
+    { matrix: [[1, 1, 1]], color: '#60a5fa' },
+    { matrix: [[1]], color: '#94a3b8' },
+    { matrix: [[1, 0, 0], [1, 0, 0], [1, 1, 1]], color: '#818cf8' }
 ];
 
 let availablePieces = [];
@@ -31,11 +30,10 @@ let draggingPiece = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 
-// بدء اللعبة وتعديل أبعاد الكانفاس
 function initGame() {
     const containerWidth = Math.min(window.innerWidth - 40, 400); 
     canvas.width = containerWidth;
-    canvas.height = containerWidth + 200; // مساحة إضافية للقطع بالأسفل
+    canvas.height = containerWidth + 200; 
     cellSize = containerWidth / COLS;
     grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
     updateScoreUI();
@@ -43,7 +41,7 @@ function initGame() {
     render();
 }
 
-// توليد 3 قطع فقط في كل دورة
+// توليد 3 قطع فقط
 function spawnPieces() {
     availablePieces = [];
     for (let i = 0; i < 3; i++) {
@@ -60,25 +58,25 @@ function spawnPieces() {
     }
 }
 
-// رسم الرقعة مع الشبكة الواضحة
+// رسم الشبكة بوضوح تام
 function drawGrid() {
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             const x = c * cellSize;
             const y = r * cellSize;
             
-            // رسم خلفية الخلية
+            // خلفية الخلية الفارغة
             ctx.fillStyle = "#1e293b"; 
             ctx.beginPath();
             ctx.roundRect(x + 2, y + 2, cellSize - 4, cellSize - 4, 8);
             ctx.fill();
 
-            // إضافة الشبكة (رسم حدود حول كل مربع)
+            // رسم حدود الشبكة (لجعلها تظهر بوضوح)
             ctx.strokeStyle = "rgba(255, 255, 255, 0.08)"; 
             ctx.lineWidth = 1;
             ctx.stroke();
 
-            // رسم القطع المستقرة في الرقعة
+            // رسم القطع المستقرة
             if (grid[r][c] !== 0) {
                 ctx.shadowBlur = 15;
                 ctx.shadowColor = grid[r][c];
@@ -91,12 +89,12 @@ function drawGrid() {
         }
     }
     
-    // رسم الخط الفاصل الأنيق بين الرقعة والقطع
+    // خط فاصل سفلي
     ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(20, canvas.width + 30);
-    ctx.lineTo(canvas.width - 20, canvas.width + 30);
+    ctx.moveTo(20, canvas.width + 35);
+    ctx.lineTo(canvas.width - 20, canvas.width + 35);
     ctx.stroke();
 }
 
@@ -104,7 +102,6 @@ function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawGrid();
     
-    // رسم خيال القطعة (Preview) أثناء سحبها فوق الشبكة
     if (draggingPiece) {
         const gCol = Math.round(draggingPiece.x / cellSize);
         const gRow = Math.round(draggingPiece.y / cellSize);
@@ -124,7 +121,6 @@ function render() {
         }
     }
 
-    // رسم القطع المتاحة للاختيار بالأسفل
     availablePieces.forEach(piece => {
         if (!piece.active) return;
         const s = piece.scale * cellSize;
@@ -169,7 +165,6 @@ function endDrag() {
         if (availablePieces.every(pc => !pc.active)) spawnPieces();
         if (!checkAnyMovePossible()) setTimeout(showGameOver, 500);
     } else {
-        // إعادة القطعة لمكانها إذا لم يتم وضعها بشكل صحيح
         draggingPiece.x = draggingPiece.originalX;
         draggingPiece.y = draggingPiece.originalY;
         draggingPiece.scale = 0.45;
@@ -226,13 +221,12 @@ function restartGame() {
     initGame();
 }
 
-// معالجة التحكم (السحب والإفلات)
 function startDrag(e) {
     const rect = canvas.getBoundingClientRect();
     const x = (e.clientX || e.touches[0].clientX) - rect.left;
     const y = (e.clientY || e.touches[0].clientY) - rect.top;
     availablePieces.forEach(p => {
-        if (p.active && x > p.x && x < p.x + 80 && y > p.y && y < p.y + 80) {
+        if (p.active && x > p.x && x < p.x + 80 && y > p.y && y < p.y + 120) {
             draggingPiece = p; 
             p.scale = 1.0;
             dragOffsetX = (p.matrix[0].length * cellSize) / 2;
