@@ -1,80 +1,41 @@
-/* إعدادات عامة ومظهر داكن (Dark Mode) */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+body { font-family: 'Tajawal', sans-serif; margin: 0; background-color: #0f172a; overflow: hidden; touch-action: none; }
+.game-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+
+.overlay-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 100; color: white; text-align: center;
 }
 
-body {
-    background-color: #0f172a; /* لون خلفية داكن عصري */
-    color: #ffffff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    overflow: hidden; /* لمنع التمرير على الهواتف */
+.game-title {
+    font-size: 4.5rem; font-weight: 900; color: #f8fafc; line-height: 0.8;
+    letter-spacing: -3px; text-shadow: 0 10px 20px rgba(0,0,0,0.5);
 }
 
-.game-container {
-    width: 100%;
-    max-width: 500px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-}
+.tap-to-play { animation: blink 1.5s infinite; color: #94a3b8; margin-top: 20px; font-size: 1.2rem; }
 
-/* تصميم اللوحة العلوية (Header) */
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    background: #1e293b;
-    padding: 15px;
-    border-radius: 15px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+.mode-buttons { display: flex; flex-direction: column; gap: 15px; width: 80%; max-width: 300px; }
+.mode-btn {
+    background: #1e293b; border: 2px solid #334155; color: white; padding: 20px;
+    border-radius: 20px; font-size: 1.2rem; font-weight: bold; cursor: pointer;
+    transition: 0.3s; display: flex; align-items: center; justify-content: space-between;
 }
+.mode-btn:hover { background: #334155; transform: translateY(-5px); border-color: #2dd4bf; }
 
-.score-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+.top-bar {
+    display: flex; justify-content: space-between; width: 90%; max-width: 400px;
+    background: #1e293b; padding: 15px 20px; border-radius: 20px; margin-bottom: 10px;
 }
+.stat-item { display: flex; flex-direction: column; align-items: center; }
+.stat-label { font-size: 0.8rem; color: #94a3b8; }
+.stat-value { font-size: 1.5rem; font-weight: bold; }
 
-.score-box .label {
-    font-size: 0.8rem;
-    color: #94a3b8;
+#gameOverModal {
+    position: fixed; top:0; left:0; width:100%; height:100%;
+    background: rgba(15, 23, 42, 0.9); display:none; align-items:center; justify-content:center; z-index:200;
 }
+.modal-card { background:#1e293b; padding:40px; border-radius:30px; text-align:center; color:white; width:80%; max-width:300px; }
+.restart-btn { background:#2dd4bf; border:none; padding:15px 30px; border-radius:15px; color:#0f172a; font-weight:bold; font-size:1.1rem; cursor:pointer; }
 
-.score-box .value {
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #38bdf8; /* لون نيون أزرق */
-}
-
-/* تصميم الزر */
-.btn-neon {
-    background: linear-gradient(45deg, #ec4899, #8b5cf6);
-    border: none;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 10px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.btn-neon:active {
-    transform: scale(0.95);
-}
-
-/* إعدادات الـ Canvas */
-canvas {
-    background-color: #1e293b;
-    border-radius: 10px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    touch-action: none; /* مهم جداً لمنع تحديث الصفحة عند السحب في الهواتف */
-}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
