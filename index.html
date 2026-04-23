@@ -3,89 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Block Puzzle Pro</title>
+    <title>Block Puzzle</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Tajawal', sans-serif; margin: 0; background-color: #0f172a; overflow: hidden; }
-        .game-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-        
-        /* تنسيق شريط النقاط العلوي - تم تحديثه ليناسب حذف المستوى */
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 85%;
-            max-width: 400px;
-            background: #1e293b;
-            padding: 15px 25px;
-            border-radius: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-        }
-        .stat-item { text-align: center; flex: 1; }
-        .stat-label { font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 2px; }
-        .stat-value { font-size: 1.6rem; font-weight: bold; }
-        .crown-icon { font-size: 2.2rem; display: block; line-height: 1; }
-
-        /* نافذة نهاية اللعبة */
-        #gameOverModal {
-            display: none; 
-            position: fixed; 
-            top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(15, 23, 42, 0.95); 
-            z-index: 9999; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center;
-            animation: fadeIn 0.4s ease;
-        }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .modal-card {
-            background: #1e293b;
-            padding: 40px;
-            border-radius: 35px;
-            text-align: center;
-            border: 2px solid #2dd4bf;
-            box-shadow: 0 0 50px rgba(45, 212, 191, 0.2);
-            width: 80%;
-            max-width: 320px;
-        }
-        .restart-btn {
-            background: linear-gradient(45deg, #2dd4bf, #22d3ee);
-            color: #0f172a; border: none; padding: 15px 40px;
-            border-radius: 50px; font-size: 1.2rem; font-weight: bold;
-            cursor: pointer; margin-top: 25px; transition: 0.3s;
-            width: 100%;
-        }
-        .restart-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
 </head>
 <body>
 
+    <div id="splashScreen" class="overlay-screen">
+        <h1 class="game-title">BLOCK<br>PUZZLE</h1>
+        <p class="tap-to-play">اضغط للبدء</p>
+    </div>
+
+    <div id="modeSelection" class="overlay-screen" style="display: none;">
+        <h2 class="menu-title">اختر نمط اللعب</h2>
+        <div class="mode-buttons">
+            <button onclick="startMode('classic')" class="mode-btn">
+                <span class="btn-icon">🟦</span>
+                التصنيف الكلاسيكي
+            </button>
+            <button onclick="startMode('puzzle')" class="mode-btn">
+                <span class="btn-icon">🎨</span>
+                نمط الألغاز (الموناليزا)
+            </button>
+        </div>
+    </div>
+
     <div class="game-container">
         <div class="top-bar">
-            <div class="stat-item" style="border-left: 1px solid rgba(148, 163, 184, 0.1);">
+            <div class="stat-item">
                 <span class="stat-label">أفضل نتيجة</span>
                 <span id="highScoreVal" class="stat-value" style="color: #facc15;">0</span>
             </div>
-            
             <div class="stat-item">
                 <span class="crown-icon">👑</span>
                 <span id="scoreVal" class="stat-value" style="color: #2dd4bf;">0</span>
             </div>
         </div>
-
         <canvas id="gameCanvas"></canvas>
     </div>
 
     <div id="gameOverModal">
         <div class="modal-card">
-            <h1 style="color: #f87171; font-size: 2.2rem; margin-top: 0;">انتهت اللعبة!</h1>
-            <p style="color: white; font-size: 1.1rem; margin: 10px 0;">مجهود رائع، نتيجتك هي:</p>
-            <div style="font-size: 3.5rem; margin: 20px 0; color: #2dd4bf; font-weight: bold;" id="finalScoreDisplay">0 👑</div>
-            <button class="restart-btn" onclick="restartGame()">العب مرة أخرى</button>
+            <h1 style="color: #f87171;">انتهت اللعبة!</h1>
+            <div id="finalScoreDisplay" style="font-size: 3rem; margin: 20px 0;">0 👑</div>
+            <button class="restart-btn" onclick="restartGame()">العودة للقائمة</button>
         </div>
     </div>
 
