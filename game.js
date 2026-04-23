@@ -49,13 +49,12 @@ function initGame() {
 
     grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
     score = 0;
-    // تم حذف تصفير المستوى هنا ليبقى المستوى مرتبطاً بتحطيم الرقم القياسي دائماً
     updateScoreUI();
     spawnPieces();
     render();
 }
 
-// توليد القطع مع زيادة الصعوبة تدريجياً
+// توليد القطع
 function spawnPieces() {
     availablePieces = [];
     for (let i = 0; i < 3; i++) {
@@ -73,17 +72,24 @@ function spawnPieces() {
     }
 }
 
-// رسم الشبكة
+// رسم الشبكة الخلفية والمربعات المستقرة
 function drawGrid() {
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             const x = c * cellSize;
             const y = r * cellSize;
+            
+            // رسم المربع الفارغ (الشبكة)
             ctx.fillStyle = "#1e293b"; 
             ctx.beginPath();
             ctx.roundRect(x + 2, y + 2, cellSize - 4, cellSize - 4, 6);
             ctx.fill();
+            
+            // رسم حدود خفيفة للمربع لتعزيز شكل الشبكة
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.02)";
+            ctx.stroke();
 
+            // رسم المربعات المملوءة بالقطع
             if (grid[r][c] !== 0) {
                 ctx.shadowBlur = 10;
                 ctx.shadowColor = grid[r][c];
@@ -99,8 +105,9 @@ function drawGrid() {
 
 function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawGrid();
+    drawGrid(); // استدعاء رسم الشبكة
     
+    // رسم خيال القطعة عند السحب (Ghost Piece)
     if (draggingPiece) {
         const gCol = Math.round(draggingPiece.x / cellSize);
         const gRow = Math.round(draggingPiece.y / cellSize);
@@ -120,6 +127,7 @@ function render() {
         }
     }
 
+    // رسم القطع الثلاث المتاحة بالأسفل
     availablePieces.forEach(piece => {
         if (!piece.active) return;
         const s = piece.scale * cellSize;
@@ -154,7 +162,7 @@ function endDrag() {
         if (availablePieces.every(pc => !pc.active)) spawnPieces();
 
         if (!checkAnyMovePossible()) {
-            showGameOver();
+            setTimeout(showGameOver, 500);
         }
     } else {
         draggingPiece.x = draggingPiece.originalX;
@@ -177,16 +185,12 @@ function checkAnyMovePossible() {
     return false;
 }
 
-// تعديل: نافذة GameOver احترافية كما طلبت
 function showGameOver() {
     const modal = document.getElementById('gameOverModal');
-    // تحديث البيانات داخل الرسالة الاحترافية
-    if (document.getElementById('finalLevelDisplay')) {
+    if (document.getElementById('finalLevelDisplay')) 
         document.getElementById('finalLevelDisplay').innerText = "المستوى: " + currentLevel;
-    }
-    if (document.getElementById('finalScoreDisplay')) {
+    if (document.getElementById('finalScoreDisplay')) 
         document.getElementById('finalScoreDisplay').innerText = score + " 👑";
-    }
     modal.style.display = 'flex';
 }
 
@@ -220,7 +224,6 @@ function checkLines() {
         tc.forEach(c => { for (let r = 0; r < ROWS; r++) grid[r][c] = 0; });
         score += (tr.length + tc.length) * 100;
 
-        // المطلوب: يرتفع المستوى فقط عندما تتفوق على أفضل نتيجة
         if (score > highScore) {
             currentLevel++;
             playSfx(1000, 'sine', 0.2);
