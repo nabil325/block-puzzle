@@ -3,17 +3,17 @@ const ctx = canvas.getContext('2d');
 const scoreElement = document.getElementById('scoreVal');
 const highScoreElement = document.getElementById('highScoreVal');
 
-// إزالة زر الإعادة برمجياً لأنه لم يعد مطلوباً حسب طلبك
+// إخفاء زر الإعادة لجعل اللعبة تعتمد على نظام الخسارة والمستويات
 const restartBtn = document.getElementById('restartBtn');
 if(restartBtn) restartBtn.style.display = 'none';
 
-// 1. الإعدادات ونظام المستويات
+// 1. الإعدادات الأساسية ونظام المستويات
 const ROWS = 8;
 const COLS = 8;
 let cellSize = 0;
 let grid = [];
 let score = 0;
-let level = 1; // نظام المستويات
+let level = 1; 
 let highScore = localStorage.getItem('blockBlastHighScore') || 0;
 
 const SHAPES = [
@@ -29,6 +29,17 @@ let draggingPiece = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 
+// نظام صوتي تفاعلي
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSfx(freq, type, dur) {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+}
+
 function initGame() {
     const containerWidth = Math.min(window.innerWidth - 80, 380); 
     canvas.width = containerWidth;
@@ -37,7 +48,7 @@ function initGame() {
 
     grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
     score = 0;
-    level = 1; 
+    level = 1;
     updateScoreUI();
     spawnPieces();
     render();
@@ -59,68 +70,16 @@ function spawnPieces() {
     }
 }
 
-// --- منطق وضع القطع وفحص الخسارة ---
-
-function placePiece(p, row, col) {
-    p.matrix.forEach((rMat, r) => {
-        rMat.forEach((cell, c) => {
-            if (cell) grid[row + r][col + c] = p.color;
-        });
-    });
-    p.active = false;
-    score += p.matrix.flat().filter(x => x).length * 10;
-    
-    checkLines(); // فحص حذف الصفوف
-
-    // إذا انتهت القطع الـ 3، نولد قطعاً جديدة
-    if (availablePieces.every(pc => !pc.active)) {
-        spawnPieces();
-    }
-
-    // فحص الخسارة: هل يوجد مكان لأي قطعة متبقية؟
-    if (!canMovePossible()) {
-        gameOver();
-    }
-
-    // نظام المستويات: كل 1000 نقطة نرفع المستوى
-    let newLevel = Math.floor(score / 1000) + 1;
-    if (newLevel > level) {
-        level = newLevel;
-        alert("مبروك! وصلت للمستوى " + level);
-    }
-
-    updateScoreUI();
-}
-
-function canMovePossible() {
-    const activePieces = availablePieces.filter(p => p.active);
-    if (activePieces.length === 0) return true;
-
-    // نتحقق من كل قطعة متبقية هل لها مكان في الشبكة
-    for (let piece of activePieces) {
-        for (let r = 0; r <= ROWS - piece.matrix.length; r++) {
-            for (let c = 0; c <= COLS - piece.matrix[0].length; c++) {
-                if (canPlace(piece, r, c)) return true; // يوجد مكان واحد على الأقل
-            }
-        }
-    }
-    return false; // لا يوجد مكان لأي قطعة
-}
-
-function gameOver() {
-    alert("خسرت! لا يوجد مكان للقطع المتبقية. ستبدأ من جديد.");
-    initGame(); // العودة للبداية تلقائياً
-}
-
-// --- بقية دوال الرسم والسحب (كما في الإصدار الاحترافي السابق) ---
-
+// --- رسم الشبكة الخلفية والمربعات ---
 function drawGrid() {
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
             const x = c * cellSize;
             const y = r * cellSize;
-            ctx.fillStyle = "#1e293b";
+            
+            ctx.fillStyle = "#1e293b"; 
             drawRoundedRect(x + 2, y + 2, cellSize - 4, cellSize - 4, 6, true);
+            
             if (grid[r][c] !== 0) {
                 ctx.shadowBlur = 8;
                 ctx.shadowColor = grid[r][c];
@@ -160,6 +119,57 @@ function render() {
     });
 }
 
+// --- منطق اللعب والخسارة والمستويات ---
+function placePiece(p, row, col) {
+    p.matrix.forEach((rMat, r) => {
+        rMat.forEach((cell, c) => {
+            if (cell) grid[row + r][col + c] = p.color;
+        });
+    });
+    p.active = false;
+    score += p.matrix.flat().filter(x => x).length * 10;
+    
+    checkLines();
+    playSfx(600, 'triangle', 0.1);
+
+    if (availablePieces.every(pc => !pc.active)) {
+        spawnPieces();
+    }
+
+    // فحص إذا كان هناك حركات ممكنة
+    if (!canMovePossible()) {
+        setTimeout(gameOver, 300);
+    }
+
+    // الترقية للمستوى التالي كل 1000 نقطة
+    let nextLevel = Math.floor(score / 1000) + 1;
+    if (nextLevel > level) {
+        level = nextLevel;
+        playSfx(1000, 'sine', 0.4);
+    }
+    updateScoreUI();
+}
+
+function canMovePossible() {
+    const activePieces = availablePieces.filter(p => p.active);
+    if (activePieces.length === 0) return true;
+
+    for (let piece of activePieces) {
+        for (let r = 0; r <= ROWS - piece.matrix.length; r++) {
+            for (let c = 0; c <= COLS - piece.matrix[0].length; c++) {
+                if (canPlace(piece, r, c)) return true; 
+            }
+        }
+    }
+    return false; 
+}
+
+function gameOver() {
+    playSfx(200, 'sawtooth', 0.5);
+    alert("خسرت! لا يوجد مكان للقطع. المستوى الذي وصلت إليه: " + level);
+    initGame(); 
+}
+
 function canPlace(piece, row, col) {
     for (let r = 0; r < piece.matrix.length; r++) {
         for (let c = 0; c < piece.matrix[r].length; c++) {
@@ -183,6 +193,7 @@ function checkLines() {
         tr.forEach(r => grid[r].fill(0));
         tc.forEach(c => { for (let r = 0; r < ROWS; r++) grid[r][c] = 0; });
         score += (tr.length + tc.length) * 100;
+        playSfx(800, 'square', 0.2);
     }
 }
 
@@ -193,12 +204,9 @@ function updateScoreUI() {
     highScoreElement.innerText = highScore; 
 }
 
-// السحب والتحكم
-canvas.addEventListener('touchstart', startDrag);
-window.addEventListener('touchmove', (e) => { if(draggingPiece) e.preventDefault(); doDrag(e); }, {passive: false});
-window.addEventListener('touchend', endDrag);
-
+// التحكم بالسحب واللمس
 function startDrag(e) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     const rect = canvas.getBoundingClientRect();
     const x = (e.clientX || e.touches[0].clientX) - rect.left;
     const y = (e.clientY || e.touches[0].clientY) - rect.top;
@@ -210,13 +218,15 @@ function startDrag(e) {
         }
     });
 }
+
 function doDrag(e) {
     if (!draggingPiece) return;
     const rect = canvas.getBoundingClientRect();
     draggingPiece.x = ((e.clientX || e.touches[0].clientX) - rect.left) - dragOffsetX;
-    draggingPiece.y = ((e.clientY || e.touches[0].clientY) - rect.top) - dragOffsetY - 50;
+    draggingPiece.y = ((e.clientY || e.touches[0].clientY) - rect.top) - dragOffsetY - 60;
     render();
 }
+
 function endDrag() {
     if (!draggingPiece) return;
     const gCol = Math.round(draggingPiece.x / cellSize);
@@ -225,5 +235,12 @@ function endDrag() {
     else { draggingPiece.x = draggingPiece.originalX; draggingPiece.y = draggingPiece.originalY; draggingPiece.scale = 0.5; }
     draggingPiece = null; render();
 }
+
+canvas.addEventListener('touchstart', startDrag);
+window.addEventListener('touchmove', (e) => { if(draggingPiece) e.preventDefault(); doDrag(e); }, {passive: false});
+window.addEventListener('touchend', endDrag);
+canvas.addEventListener('mousedown', startDrag);
+window.addEventListener('mousemove', doDrag);
+window.addEventListener('mouseup', endDrag);
 
 window.onload = initGame;
