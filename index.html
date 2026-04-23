@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Block Puzzle - لعبة المكعبات</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <div class="score-box">
+                <span class="label">النقاط</span>
+                <span id="scoreVal" class="value">0</span>
+            </div>
+            <button id="restartBtn" class="btn-neon">إعادة</button>
+            <div class="score-box">
+                <span class="label">أفضل نتيجة</span>
+                <span id="highScoreVal" class="value">0</span>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
