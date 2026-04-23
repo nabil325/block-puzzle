@@ -4,7 +4,6 @@ const scoreElement = document.getElementById('scoreVal');
 const highScoreElement = document.getElementById('highScoreVal');
 const levelElement = document.getElementById('levelVal');
 
-// 1. الإعدادات الأساسية - توسيع الرقعة لتأخذ مساحة أكبر
 const ROWS = 8;
 const COLS = 8;
 let cellSize = 0;
@@ -13,14 +12,20 @@ let score = 0;
 let currentLevel = 1;
 let highScore = localStorage.getItem('blockBlastHighScore') || 0;
 
+// إضافة أشكال متنوعة وجديدة (أشكال كبيرة، صغيرة، ومعقدة)
 const SHAPES = [
-    { matrix: [[1, 1, 1, 1]], color: '#2dd4bf' }, 
-    { matrix: [[1, 1], [1, 1]], color: '#fbbf24' }, 
-    { matrix: [[0, 1, 0], [1, 1, 1]], color: '#a855f7' }, 
-    { matrix: [[1, 1, 1], [1, 0, 0]], color: '#f87171' }, 
-    { matrix: [[1, 1, 0], [0, 1, 1]], color: '#4ade80' }, 
-    { matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: '#ec4899' }, 
-    { matrix: [[1]], color: '#94a3b8' } 
+    { matrix: [[1, 1, 1, 1]], color: '#2dd4bf' }, // خط أفقي 4
+    { matrix: [[1], [1], [1], [1]], color: '#2dd4bf' }, // خط عمودي 4
+    { matrix: [[1, 1], [1, 1]], color: '#fbbf24' }, // مربع 2x2
+    { matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: '#ec4899' }, // مربع عملاق 3x3
+    { matrix: [[0, 1, 0], [1, 1, 1]], color: '#a855f7' }, // حرف T
+    { matrix: [[1, 1, 1], [1, 0, 0]], color: '#f87171' }, // حرف L كبير
+    { matrix: [[1, 1], [1, 0]], color: '#f87171' }, // زاوية صغيرة
+    { matrix: [[1, 1, 0], [0, 1, 1]], color: '#4ade80' }, // حرف Z
+    { matrix: [[1, 1, 1]], color: '#60a5fa' }, // خط صغير 3
+    { matrix: [[1, 1]], color: '#f97316' }, // خط صغير 2
+    { matrix: [[1]], color: '#94a3b8' }, // نقطة واحدة
+    { matrix: [[1, 0, 0], [1, 0, 0], [1, 1, 1]], color: '#818cf8' } // حرف L ضخم
 ];
 
 let availablePieces = [];
@@ -28,7 +33,6 @@ let draggingPiece = null;
 let dragOffsetX = 0;
 let dragOffsetY = 0;
 
-// نظام الصوت
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playSfx(freq, type, dur) {
     if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -40,32 +44,29 @@ function playSfx(freq, type, dur) {
     o.start(); o.stop(audioCtx.currentTime + dur);
 }
 
-// بدء اللعبة وتوسيع حجم الكانفاس
 function initGame() {
-    const containerWidth = Math.min(window.innerWidth - 40, 420); 
+    const containerWidth = Math.min(window.innerWidth - 40, 400); 
     canvas.width = containerWidth;
-    canvas.height = containerWidth + 220; // زيادة الارتفاع لاستيعاب القطع والخط الفاصل
+    canvas.height = containerWidth + 200; 
     cellSize = containerWidth / COLS;
-
     grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
     updateScoreUI();
     spawnPieces();
     render();
 }
 
-// توليد 4 قطع بدلاً من 3 لزيادة الخيارات
+// العودة لنظام الـ 3 قطع كما في طلبك
 function spawnPieces() {
     availablePieces = [];
-    for (let i = 0; i < 4; i++) { // إضافة قطعة رابعة
-        let range = Math.min(SHAPES.length, 4 + Math.floor(currentLevel / 50));
-        const shape = SHAPES[Math.floor(Math.random() * range)];
+    for (let i = 0; i < 3; i++) {
+        const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
         availablePieces.push({
             ...shape,
-            x: (canvas.width / 4) * i + 10,
-            y: canvas.width + 60, // إزاحة للأسفل لترك مساحة للخط
-            originalX: (canvas.width / 4) * i + 10,
-            originalY: canvas.width + 60,
-            scale: 0.45,
+            x: (canvas.width / 3) * i + (canvas.width / 12),
+            y: canvas.width + 50,
+            originalX: (canvas.width / 3) * i + (canvas.width / 12),
+            originalY: canvas.width + 50,
+            scale: 0.5,
             active: true
         });
     }
@@ -92,13 +93,12 @@ function drawGrid() {
             }
         }
     }
-
-    // رسم الخط الفاصل الأنيق بين الرقعة والقطع
-    ctx.strokeStyle = "rgba(148, 163, 184, 0.3)";
+    // الخط الفاصل بين الرقعة والقطع
+    ctx.strokeStyle = "rgba(148, 163, 184, 0.2)";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(20, canvas.width + 25);
-    ctx.lineTo(canvas.width - 20, canvas.width + 25);
+    ctx.moveTo(20, canvas.width + 20);
+    ctx.lineTo(canvas.width - 20, canvas.width + 20);
     ctx.stroke();
 }
 
@@ -141,7 +141,6 @@ function render() {
     });
 }
 
-// باقي منطق اللعبة (endDrag, checkLines, etc.) يبقى كما هو مع تحديث التنسيق
 function endDrag() {
     if (!draggingPiece) return;
     const gCol = Math.round(draggingPiece.x / cellSize);
@@ -156,16 +155,12 @@ function endDrag() {
         draggingPiece.active = false;
         playSfx(600, 'triangle', 0.1);
         checkLines();
-        
         if (availablePieces.every(pc => !pc.active)) spawnPieces();
-
-        if (!checkAnyMovePossible()) {
-            setTimeout(showGameOver, 500);
-        }
+        if (!checkAnyMovePossible()) setTimeout(showGameOver, 500);
     } else {
         draggingPiece.x = draggingPiece.originalX;
         draggingPiece.y = draggingPiece.originalY;
-        draggingPiece.scale = 0.45;
+        draggingPiece.scale = 0.5;
     }
     draggingPiece = null;
     render();
@@ -190,7 +185,6 @@ function checkLines() {
         for (let r = 0; r < ROWS; r++) if (grid[r][c] === 0) f = false;
         if (f) tc.push(c);
     }
-    
     if (tr.length > 0 || tc.length > 0) {
         tr.forEach(r => grid[r].fill(0));
         tc.forEach(c => { for (let r = 0; r < ROWS; r++) grid[r][c] = 0; });
@@ -204,25 +198,13 @@ function checkLines() {
 function checkAnyMovePossible() {
     const activePieces = availablePieces.filter(p => p.active);
     for (let piece of activePieces) {
-        for (let r = 0; r <= ROWS - piece.matrix.length; r++) {
-            for (let c = 0; c <= COLS - piece.matrix[0].length; c++) {
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
                 if (canPlace(piece, r, c)) return true;
             }
         }
     }
     return false;
-}
-
-function showGameOver() {
-    const modal = document.getElementById('gameOverModal');
-    if (document.getElementById('finalLevelDisplay')) document.getElementById('finalLevelDisplay').innerText = "المستوى: " + currentLevel;
-    if (document.getElementById('finalScoreDisplay')) document.getElementById('finalScoreDisplay').innerText = score + " 👑";
-    modal.style.display = 'flex';
-}
-
-function restartGame() {
-    document.getElementById('gameOverModal').style.display = 'none';
-    initGame();
 }
 
 function updateScoreUI() { 
@@ -231,6 +213,13 @@ function updateScoreUI() {
     localStorage.setItem('blockBlastHighScore', highScore);
     highScoreElement.innerText = highScore;
     levelElement.innerText = currentLevel;
+}
+
+function showGameOver() {
+    const modal = document.getElementById('gameOverModal');
+    document.getElementById('finalLevelDisplay').innerText = "المستوى: " + currentLevel;
+    document.getElementById('finalScoreDisplay').innerText = score + " 👑";
+    modal.style.display = 'flex';
 }
 
 function startDrag(e) {
@@ -242,7 +231,6 @@ function startDrag(e) {
             draggingPiece = p; p.scale = 1.0;
             dragOffsetX = (p.matrix[0].length * cellSize) / 2;
             dragOffsetY = (p.matrix.length * cellSize) / 2;
-            playSfx(400, 'sine', 0.05);
         }
     });
 }
