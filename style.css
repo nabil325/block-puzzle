@@ -1,0 +1,80 @@
+/* إعدادات عامة ومظهر داكن (Dark Mode) */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #0f172a; /* لون خلفية داكن عصري */
+    color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden; /* لمنع التمرير على الهواتف */
+}
+
+.game-container {
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+/* تصميم اللوحة العلوية (Header) */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    background: #1e293b;
+    padding: 15px;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.score-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.score-box .label {
+    font-size: 0.8rem;
+    color: #94a3b8;
+}
+
+.score-box .value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #38bdf8; /* لون نيون أزرق */
+}
+
+/* تصميم الزر */
+.btn-neon {
+    background: linear-gradient(45deg, #ec4899, #8b5cf6);
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-neon:active {
+    transform: scale(0.95);
+}
+
+/* إعدادات الـ Canvas */
+canvas {
+    background-color: #1e293b;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    touch-action: none; /* مهم جداً لمنع تحديث الصفحة عند السحب في الهواتف */
+}
