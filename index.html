@@ -6,37 +6,86 @@
     <title>Block Puzzle Pro</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700&display=swap" rel="stylesheet">
-</head>
-<body style="font-family: 'Tajawal', sans-serif;">
-    <div class="game-container" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; position:relative;">
+    <style>
+        body { font-family: 'Tajawal', sans-serif; margin: 0; background-color: #0f172a; overflow: hidden; }
+        .game-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
         
-        <div id="topScoreBar" style="display:flex; justify-content:space-between; align-items:center; width:90%; max-width:400px; padding:10px 20px; background:rgba(30, 41, 59, 0.8); border-radius:15px; box-shadow:0 4px 10px rgba(0,0,0,0.3); color:white; margin-bottom:15px;">
-            <div class="stat-group" style="text-align:right;">
-                <span class="stat-label" style="font-size:0.8rem; opacity:0.7;">أفضل نتيجة</span>
-                <div id="highScoreVal" style="font-size:1.5rem; color:#facc15;">0</div>
+        /* تنسيق شريط النقاط العلوي */
+        .top-bar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 90%;
+            max-width: 400px;
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+        .stat-item { text-align: center; }
+        .stat-label { font-size: 0.7rem; color: #94a3b8; display: block; margin-bottom: 5px; }
+        .stat-value { font-size: 1.4rem; font-weight: bold; }
+
+        /* نافذة نهاية اللعبة */
+        #gameOverModal {
+            display: none; 
+            position: fixed; 
+            top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(15, 23, 42, 0.9); 
+            z-index: 9999; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center;
+            animation: fadeIn 0.4s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .modal-card {
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            border: 2px solid #ec4899;
+            box-shadow: 0 0 50px rgba(236, 72, 153, 0.2);
+        }
+        .restart-btn {
+            background: linear-gradient(45deg, #a855f7, #ec4899);
+            color: white; border: none; padding: 15px 40px;
+            border-radius: 50px; font-size: 1.2rem; font-weight: bold;
+            cursor: pointer; margin-top: 20px; transition: 0.3s;
+        }
+        .restart-btn:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <div class="top-bar">
+            <div class="stat-item">
+                <span style="font-size: 2rem; display: block;">👑</span>
+                <span id="scoreVal" class="stat-value" style="color: #2dd4bf;">0</span>
             </div>
-            
-            <div class="level-indicator" style="text-align:center;">
-                <span class="stat-label" style="font-size:0.8rem; opacity:0.7;">LEVEL</span>
-                <div id="levelVal" style="font-size:2rem; font-weight:bold; color:#ec4899;">1</div>
+            <div class="stat-item">
+                <span class="stat-label">LEVEL</span>
+                <span id="levelVal" class="stat-value" style="color: #ec4899; font-size: 2.5rem;">1</span>
             </div>
-            
-            <div class="stat-group" style="text-align:left;">
-                <div style="font-size:1.8rem;">👑</div> <div id="scoreVal" style="font-size:1.5rem; color:#2dd4bf;">0</div>
+            <div class="stat-item">
+                <span class="stat-label">أفضل نتيجة</span>
+                <span id="highScoreVal" class="stat-value" style="color: #facc15;">0</span>
             </div>
         </div>
 
         <canvas id="gameCanvas"></canvas>
     </div>
 
-    <div id="gameOverModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.95); z-index:1000; flex-direction:column; justify-content:center; align-items:center; color:white; text-align:center;">
-        <div class="modal-content" style="background:linear-gradient(135deg, #1e293b, #0f172a); border:2px solid #a855f7; border-radius:20px; padding:30px; box-shadow: 0 0 30px rgba(168, 85, 247, 0.3);">
-            <h1 style="font-size:3.5rem; margin-bottom:10px; color:#f87171; text-shadow: 0 0 20px rgba(248, 113, 113, 0.5);">انتهت الجولة!</h1>
-            <p id="finalLevel" style="font-size:1.8rem; margin-bottom:5px;">المستوى الذي وصلت إليه: 1</p>
-            <p id="finalScore" style="font-size:1.4rem; margin-bottom:30px; opacity:0.8;"></p>
-            <button onclick="restartGame()" style="padding:15px 50px; font-size:1.3rem; font-weight:bold; border:none; border-radius:50px; background:linear-gradient(45deg, #a855f7, #ec4899); color:white; cursor:pointer; box-shadow: 0 10px 25px rgba(168, 85, 247, 0.4); transform:scale(1); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                العب مجدداً
-            </button>
+    <div id="gameOverModal">
+        <div class="modal-card">
+            <h1 style="color: #f87171; font-size: 2.5rem; margin-top: 0;">انتهت اللعبة!</h1>
+            <p style="color: white; font-size: 1.2rem; margin: 10px 0;">لقد حققت تحطيمًا رائعًا</p>
+            <div style="font-size: 3rem; margin: 20px 0;" id="finalScoreDisplay">0 👑</div>
+            <p id="finalLevelDisplay" style="color: #94a3b8;">المستوى: 1</p>
+            <button class="restart-btn" onclick="restartGame()">محاولة أخرى</button>
         </div>
     </div>
 
