@@ -1,272 +1,51 @@
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const scoreElement = document.getElementById('scoreVal');
-const highScoreElement = document.getElementById('highScoreVal');
-const levelElement = document.getElementById('levelVal');
+// ... المتغيرات والإعدادات بالأعلى كما هي ...
 
-// 1. الإعدادات الأساسية
-const ROWS = 8;
-const COLS = 8;
-let cellSize = 0;
-let grid = [];
-let score = 0;
-let currentLevel = 1;
-let highScore = localStorage.getItem('blockBlastHighScore') || 0;
-
-const SHAPES = [
-    { matrix: [[1, 1, 1, 1]], color: '#2dd4bf' }, // خط
-    { matrix: [[1, 1], [1, 1]], color: '#fbbf24' }, // مربع
-    { matrix: [[0, 1, 0], [1, 1, 1]], color: '#a855f7' }, // حرف T
-    { matrix: [[1, 1, 1], [1, 0, 0]], color: '#f87171' }, // حرف L
-    { matrix: [[1, 1, 0], [0, 1, 1]], color: '#4ade80' }, // حرف Z
-    { matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: '#ec4899' }, // مربع كبير
-    { matrix: [[1]], color: '#94a3b8' } // نقطة
-];
-
-let availablePieces = [];
-let draggingPiece = null;
-let dragOffsetX = 0;
-let dragOffsetY = 0;
-
-// نظام الصوت
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playSfx(freq, type, dur) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = type; o.frequency.value = freq;
-    g.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    o.connect(g); g.connect(audioCtx.destination);
-    o.start(); o.stop(audioCtx.currentTime + dur);
-}
-
-// بدء اللعبة
-function initGame() {
-    const containerWidth = Math.min(window.innerWidth - 80, 380); 
-    canvas.width = containerWidth;
-    canvas.height = containerWidth + 180; 
-    cellSize = containerWidth / COLS;
-
-    grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-    score = 0;
-    currentLevel = 1;
-    updateScoreUI();
-    spawnPieces();
-    render();
-}
-
-// توليد القطع مع زيادة الصعوبة تدريجياً
-function spawnPieces() {
-    availablePieces = [];
-    for (let i = 0; i < 3; i++) {
-        // تزداد احتمالية الأشكال الصعبة مع ارتفاع المستويات
-        let range = Math.min(SHAPES.length, 4 + Math.floor(currentLevel / 50));
-        const shape = SHAPES[Math.floor(Math.random() * range)];
-        availablePieces.push({
-            ...shape,
-            x: (canvas.width / 3) * i + 15,
-            y: canvas.width + 40,
-            originalX: (canvas.width / 3) * i + 15,
-            originalY: canvas.width + 40,
-            scale: 0.5,
-            active: true
-        });
-    }
-}
-
-// رسم الشبكة
-function drawGrid() {
-    for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-            const x = c * cellSize;
-            const y = r * cellSize;
-            ctx.fillStyle = "#1e293b"; 
-            ctx.beginPath();
-            ctx.roundRect(x + 2, y + 2, cellSize - 4, cellSize - 4, 6);
-            ctx.fill();
-
-            if (grid[r][c] !== 0) {
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = grid[r][c];
-                ctx.fillStyle = grid[r][c];
-                ctx.beginPath();
-                ctx.roundRect(x + 3, y + 3, cellSize - 6, cellSize - 6, 6);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-            }
-        }
-    }
-}
-
-function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawGrid();
+// تحديث لوحة النقاط في دالة updateScoreUI
+function updateScoreUI() {
+    scoreElement.innerText = score;
+    const isNewHighScore = score > highScore;
+    highScore = Math.max(score, highScore);
+    localStorage.setItem('blockBlastHighScore', highScore);
     
-    // رسم القطعة التي يتم سحبها (خيال)
-    if (draggingPiece) {
-        const gCol = Math.round(draggingPiece.x / cellSize);
-        const gRow = Math.round(draggingPiece.y / cellSize);
-        if (canPlace(draggingPiece, gRow, gCol)) {
-            ctx.globalAlpha = 0.2;
-            draggingPiece.matrix.forEach((row, r) => {
-                row.forEach((cell, c) => {
-                    if (cell) {
-                        ctx.fillStyle = draggingPiece.color;
-                        ctx.beginPath();
-                        ctx.roundRect((gCol+c)*cellSize+4, (gRow+r)*cellSize+4, cellSize-8, cellSize-8, 4);
-                        ctx.fill();
-                    }
-                });
-            });
-            ctx.globalAlpha = 1.0;
-        }
+    highScoreElement.innerText = highScore;
+    // التأكد من تحديث رقم المستوى في الـ HTML
+    if(document.getElementById('levelVal')) {
+        document.getElementById('levelVal').innerText = currentLevel;
     }
-
-    // رسم القطع المتاحة بالأسفل
-    availablePieces.forEach(piece => {
-        if (!piece.active) return;
-        const s = piece.scale * cellSize;
-        piece.matrix.forEach((row, r) => {
-            row.forEach((cell, c) => {
-                if (cell) {
-                    ctx.fillStyle = piece.color;
-                    ctx.beginPath();
-                    ctx.roundRect(piece.x + c * s, piece.y + r * s, s - 2, s - 2, 4);
-                    ctx.fill();
-                }
-            });
-        });
-    });
 }
 
-// منطق السحب
-function endDrag() {
-    if (!draggingPiece) return;
-    const gCol = Math.round(draggingPiece.x / cellSize);
-    const gRow = Math.round(draggingPiece.y / cellSize);
-
-    if (canPlace(draggingPiece, gRow, gCol)) {
-        draggingPiece.matrix.forEach((rMat, r) => {
-            rMat.forEach((cell, c) => {
-                if (cell) grid[gRow + r][gCol + c] = draggingPiece.color;
-            });
-        });
-        draggingPiece.active = false;
-        playSfx(600, 'triangle', 0.1);
-        checkLines();
-        
-        if (availablePieces.every(pc => !pc.active)) spawnPieces();
-
-        // منطق الخسارة الاحترافي
-        if (!checkAnyMovePossible()) {
-            showGameOver();
-        }
-    } else {
-        draggingPiece.x = draggingPiece.originalX;
-        draggingPiece.y = draggingPiece.originalY;
-        draggingPiece.scale = 0.5;
-    }
-    draggingPiece = null;
-    render();
-}
-
-// فحص الخسارة: هل يوجد مكان لأي قطعة متبقية؟
-function checkAnyMovePossible() {
-    const activePieces = availablePieces.filter(p => p.active);
-    for (let piece of activePieces) {
-        for (let r = 0; r <= ROWS - piece.matrix.length; r++) {
-            for (let c = 0; c <= COLS - piece.matrix[0].length; c++) {
-                if (canPlace(piece, r, c)) return true;
-            }
-        }
-    }
-    return false;
-}
-
-function showGameOver() {
-    const modal = document.getElementById('gameOverModal');
-    document.getElementById('finalLevel').innerText = "وصلت للمستوى: " + currentLevel;
-    document.getElementById('finalScore').innerText = "نقاطك: " + score;
-    modal.style.display = 'flex';
-}
-
+// دالة إعادة التشغيل التي سيستدعيها الزر الجديد
 function restartGame() {
     document.getElementById('gameOverModal').style.display = 'none';
     initGame();
 }
 
-function canPlace(piece, row, col) {
-    for (let r = 0; r < piece.matrix.length; r++) {
-        for (let c = 0; c < piece.matrix[r].length; c++) {
-            if (piece.matrix[r][c]) {
-                if (row+r < 0 || row+r >= ROWS || col+c < 0 || col+c >= COLS || grid[row+r][col+c] !== 0) return false;
-            }
-        }
-    }
-    return true;
+// تعديل منطق نهاية اللعبة في دالة endDrag
+// بدلاً من الـ alert القديم:
+if (!canMovePossible()) {
+    setTimeout(() => {
+        const modal = document.getElementById('gameOverModal');
+        // ترتيب وتحديث المعلومات في النافذة
+        document.getElementById('finalLevel').innerText = "المستوى الذي وصلت إليه: " + currentLevel;
+        document.getElementById('finalScore').innerText = score + " 👑";
+        modal.style.display = 'flex'; // إظهار النافذة
+        playSfx(200, 'sawtooth', 0.5); // صوت الخسارة
+    }, 500);
 }
 
+// تحديث منطق المستوى في دالة checkLines
 function checkLines() {
-    let tr = [], tc = [];
-    for (let r = 0; r < ROWS; r++) if (grid[r].every(v => v !== 0)) tr.push(r);
-    for (let c = 0; c < COLS; c++) {
-        let f = true;
-        for (let r = 0; r < ROWS; r++) if (grid[r][c] === 0) f = false;
-        if (f) tc.push(c);
-    }
+    // ... الكود السابق للمسح ...
     
     if (tr.length > 0 || tc.length > 0) {
-        tr.forEach(r => grid[r].fill(0));
-        tc.forEach(c => { for (let r = 0; r < ROWS; r++) grid[r][c] = 0; });
-        score += (tr.length + tc.length) * 100;
-
-        // منطق المستوى: يرتفع المستوى عندما تتفوق على أفضل نتيجة
+        // ... كود حذف الصفوف وزيادة النقاط ...
+        
+        // المنطق الجديد: إذا تجاوزت النقاط الحالية أفضل نتيجة سابقة، يرتفع المستوى
         if (score > highScore && currentLevel < 5000) {
             currentLevel++;
-            playSfx(1000, 'sine', 0.2);
+            playSfx(1000, 'sine', 0.2); // صوت التميز
         }
-
+        
         updateScoreUI();
-        playSfx(800, 'square', 0.2);
     }
 }
-
-function updateScoreUI() { 
-    scoreElement.innerText = score; 
-    highScore = Math.max(score, highScore);
-    localStorage.setItem('blockBlastHighScore', highScore);
-    highScoreElement.innerText = highScore;
-    levelElement.innerText = currentLevel;
-}
-
-// الأحداث (Touch & Mouse)
-function startDrag(e) {
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX || e.touches[0].clientX) - rect.left;
-    const y = (e.clientY || e.touches[0].clientY) - rect.top;
-    availablePieces.forEach(p => {
-        if (p.active && x > p.x && x < p.x + 80 && y > p.y && y < p.y + 80) {
-            draggingPiece = p; p.scale = 1.0;
-            dragOffsetX = (p.matrix[0].length * cellSize) / 2;
-            dragOffsetY = (p.matrix.length * cellSize) / 2;
-            playSfx(400, 'sine', 0.05);
-        }
-    });
-}
-
-function doDrag(e) {
-    if (!draggingPiece) return;
-    const rect = canvas.getBoundingClientRect();
-    draggingPiece.x = ((e.clientX || e.touches[0].clientX) - rect.left) - dragOffsetX;
-    draggingPiece.y = ((e.clientY || e.touches[0].clientY) - rect.top) - dragOffsetY - 70;
-    render();
-}
-
-canvas.addEventListener('touchstart', startDrag);
-window.addEventListener('touchmove', (e) => { if(draggingPiece) e.preventDefault(); doDrag(e); }, {passive: false});
-window.addEventListener('touchend', endDrag);
-canvas.addEventListener('mousedown', startDrag);
-window.addEventListener('mousemove', doDrag);
-window.addEventListener('mouseup', endDrag);
-
-window.onload = initGame;
