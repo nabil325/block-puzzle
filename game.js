@@ -1,271 +1,199 @@
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const scoreElement = document.getElementById('scoreVal');
-const highScoreElement = document.getElementById('highScoreVal');
-const levelElement = document.getElementById('levelVal');
+const Game = {
+    state: {
+        grid: [],
+        score: 0,
+        highScore: localStorage.getItem('blockBlastHighScore') || 0,
+        pieces: [],
+        dragging: null,
+        mode: 'classic',
+        cellSize: 0
+    },
 
-// 1. الإعدادات الأساسية
-const ROWS = 8;
-const COLS = 8;
-let cellSize = 0;
-let grid = [];
-let score = 0;
-let currentLevel = 1;
-let highScore = localStorage.getItem('blockBlastHighScore') || 0;
+    // الألوان المستوحاة من صورك
+    colors: {
+        cyan: '#2dd4bf', gold: '#fbbf24', purple: '#a855f7', 
+        red: '#f87171', green: '#4ade80', pink: '#ec4899', gray: '#94a3b8'
+    },
 
-const SHAPES = [
-    { matrix: [[1, 1, 1, 1]], color: '#2dd4bf' }, // خط
-    { matrix: [[1, 1], [1, 1]], color: '#fbbf24' }, // مربع
-    { matrix: [[0, 1, 0], [1, 1, 1]], color: '#a855f7' }, // حرف T
-    { matrix: [[1, 1, 1], [1, 0, 0]], color: '#f87171' }, // حرف L
-    { matrix: [[1, 1, 0], [0, 1, 1]], color: '#4ade80' }, // حرف Z
-    { matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: '#ec4899' }, // مربع كبير
-    { matrix: [[1]], color: '#94a3b8' } // نقطة
-];
+    shapes: [
+        { matrix: [[1, 1, 1, 1]], color: '#2dd4bf' },
+        { matrix: [[1, 1], [1, 1]], color: '#fbbf24' },
+        { matrix: [[0, 1, 0], [1, 1, 1]], color: '#a855f7' },
+        { matrix: [[1, 1, 1], [1, 0, 0]], color: '#f87171' },
+        { matrix: [[1, 1, 0], [0, 1, 1]], color: '#4ade80' },
+        { matrix: [[1]], color: '#94a3b8' }
+    ],
 
-let availablePieces = [];
-let draggingPiece = null;
-let dragOffsetX = 0;
-let dragOffsetY = 0;
+    init() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.puzzleImg = new Image();
+        this.puzzleImg.src = 'https://picsum.photos/400/400';
+        this.setupEvents();
+        document.getElementById('highScoreVal').innerText = this.state.highScore;
+    },
 
-// نظام الصوت
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playSfx(freq, type, dur) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = type; o.frequency.value = freq;
-    g.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    o.connect(g); g.connect(audioCtx.destination);
-    o.start(); o.stop(audioCtx.currentTime + dur);
-}
-
-// بدء اللعبة
-function initGame() {
-    const containerWidth = Math.min(window.innerWidth - 80, 380); 
-    canvas.width = containerWidth;
-    canvas.height = containerWidth + 180; 
-    cellSize = containerWidth / COLS;
-
-    grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-    score = 0;
-    // تم حذف تصفير المستوى هنا ليبقى المستوى مرتبطاً بتحطيم الرقم القياسي دائماً
-    updateScoreUI();
-    spawnPieces();
-    render();
-}
-
-// توليد القطع مع زيادة الصعوبة تدريجياً
-function spawnPieces() {
-    availablePieces = [];
-    for (let i = 0; i < 3; i++) {
-        let range = Math.min(SHAPES.length, 4 + Math.floor(currentLevel / 50));
-        const shape = SHAPES[Math.floor(Math.random() * range)];
-        availablePieces.push({
-            ...shape,
-            x: (canvas.width / 3) * i + 15,
-            y: canvas.width + 40,
-            originalX: (canvas.width / 3) * i + 15,
-            originalY: canvas.width + 40,
-            scale: 0.5,
-            active: true
-        });
-    }
-}
-
-// رسم الشبكة
-function drawGrid() {
-    for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-            const x = c * cellSize;
-            const y = r * cellSize;
-            ctx.fillStyle = "#1e293b"; 
-            ctx.beginPath();
-            ctx.roundRect(x + 2, y + 2, cellSize - 4, cellSize - 4, 6);
-            ctx.fill();
-
-            if (grid[r][c] !== 0) {
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = grid[r][c];
-                ctx.fillStyle = grid[r][c];
-                ctx.beginPath();
-                ctx.roundRect(x + 3, y + 3, cellSize - 6, cellSize - 6, 6);
-                ctx.fill();
-                ctx.shadowBlur = 0;
-            }
-        }
-    }
-}
-
-function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawGrid();
-    
-    if (draggingPiece) {
-        const gCol = Math.round(draggingPiece.x / cellSize);
-        const gRow = Math.round(draggingPiece.y / cellSize);
-        if (canPlace(draggingPiece, gRow, gCol)) {
-            ctx.globalAlpha = 0.2;
-            draggingPiece.matrix.forEach((row, r) => {
-                row.forEach((cell, c) => {
-                    if (cell) {
-                        ctx.fillStyle = draggingPiece.color;
-                        ctx.beginPath();
-                        ctx.roundRect((gCol+c)*cellSize+4, (gRow+r)*cellSize+4, cellSize-8, cellSize-8, 4);
-                        ctx.fill();
-                    }
-                });
-            });
-            ctx.globalAlpha = 1.0;
-        }
-    }
-
-    availablePieces.forEach(piece => {
-        if (!piece.active) return;
-        const s = piece.scale * cellSize;
-        piece.matrix.forEach((row, r) => {
-            row.forEach((cell, c) => {
-                if (cell) {
-                    ctx.fillStyle = piece.color;
-                    ctx.beginPath();
-                    ctx.roundRect(piece.x + c * s, piece.y + r * s, s - 2, s - 2, 4);
-                    ctx.fill();
-                }
-            });
-        });
-    });
-}
-
-function endDrag() {
-    if (!draggingPiece) return;
-    const gCol = Math.round(draggingPiece.x / cellSize);
-    const gRow = Math.round(draggingPiece.y / cellSize);
-
-    if (canPlace(draggingPiece, gRow, gCol)) {
-        draggingPiece.matrix.forEach((rMat, r) => {
-            rMat.forEach((cell, c) => {
-                if (cell) grid[gRow + r][gCol + c] = draggingPiece.color;
-            });
-        });
-        draggingPiece.active = false;
-        playSfx(600, 'triangle', 0.1);
-        checkLines();
+    start(mode) {
+        this.state.mode = mode;
+        this.state.score = 0;
+        this.state.grid = Array.from({ length: 8 }, () => Array(8).fill(0));
         
-        if (availablePieces.every(pc => !pc.active)) spawnPieces();
+        document.getElementById('mainMenu').classList.add('hidden');
+        document.getElementById('gameUI').classList.remove('hidden');
+        
+        this.resize();
+        this.spawnPieces();
+        this.render();
+    },
 
-        if (!checkAnyMovePossible()) {
-            showGameOver();
+    resize() {
+        const size = Math.min(window.innerWidth - 40, 380);
+        this.canvas.width = size;
+        this.canvas.height = size + 160;
+        this.state.cellSize = size / 8;
+    },
+
+    spawnPieces() {
+        this.state.pieces = [];
+        for (let i = 0; i < 3; i++) {
+            const shape = this.shapes[Math.floor(Math.random() * this.shapes.length)];
+            this.state.pieces.push({
+                ...shape,
+                x: (this.canvas.width / 3) * i + 15,
+                y: this.canvas.width + 40,
+                ox: (this.canvas.width / 3) * i + 15,
+                oy: this.canvas.width + 40,
+                active: true,
+                scale: 0.5
+            });
         }
-    } else {
-        draggingPiece.x = draggingPiece.originalX;
-        draggingPiece.y = draggingPiece.originalY;
-        draggingPiece.scale = 0.5;
-    }
-    draggingPiece = null;
-    render();
-}
+    },
 
-function checkAnyMovePossible() {
-    const activePieces = availablePieces.filter(p => p.active);
-    for (let piece of activePieces) {
-        for (let r = 0; r <= ROWS - piece.matrix.length; r++) {
-            for (let c = 0; c <= COLS - piece.matrix[0].length; c++) {
-                if (canPlace(piece, r, c)) return true;
+    render() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.drawGrid();
+        this.drawPieces();
+        requestAnimationFrame(() => this.render());
+    },
+
+    drawGrid() {
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const x = c * this.state.cellSize, y = r * this.state.cellSize;
+                this.ctx.fillStyle = "#1e293b";
+                this.ctx.beginPath();
+                this.ctx.roundRect(x+2, y+2, this.state.cellSize-4, this.state.cellSize-4, 8);
+                this.ctx.fill();
+
+                if (this.state.grid[r][c]) {
+                    this.drawBlock(x, y, this.state.grid[r][c]);
+                }
             }
         }
-    }
-    return false;
-}
+    },
 
-// تعديل: نافذة GameOver احترافية كما طلبت
-function showGameOver() {
-    const modal = document.getElementById('gameOverModal');
-    // تحديث البيانات داخل الرسالة الاحترافية
-    if (document.getElementById('finalLevelDisplay')) {
-        document.getElementById('finalLevelDisplay').innerText = "المستوى: " + currentLevel;
-    }
-    if (document.getElementById('finalScoreDisplay')) {
-        document.getElementById('finalScoreDisplay').innerText = score + " 👑";
-    }
-    modal.style.display = 'flex';
-}
+    drawBlock(x, y, color) {
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.roundRect(x+3, y+3, this.state.cellSize-6, this.state.cellSize-6, 6);
+        this.ctx.clip();
+        if(this.state.mode === 'puzzle') {
+            this.ctx.drawImage(this.puzzleImg, 0, 0, 400, 400, 0, 0, this.canvas.width, this.canvas.width);
+        } else {
+            this.ctx.fillStyle = color;
+            this.ctx.fill();
+        }
+        this.ctx.restore();
+    },
 
-function restartGame() {
-    document.getElementById('gameOverModal').style.display = 'none';
-    initGame();
-}
+    drawPieces() {
+        this.state.pieces.forEach(p => {
+            if (!p.active) return;
+            const s = (this.state.dragging === p ? 1 : 0.5) * this.state.cellSize;
+            p.matrix.forEach((row, r) => row.forEach((cell, c) => {
+                if (cell) {
+                    this.ctx.fillStyle = p.color;
+                    this.ctx.beginPath();
+                    this.ctx.roundRect(p.x + c*s, p.y + r*s, s-2, s-2, 4);
+                    this.ctx.fill();
+                }
+            }));
+        });
+    },
 
-function canPlace(piece, row, col) {
-    for (let r = 0; r < piece.matrix.length; r++) {
-        for (let c = 0; c < piece.matrix[r].length; c++) {
-            if (piece.matrix[r][c]) {
-                if (row+r < 0 || row+r >= ROWS || col+c < 0 || col+c >= COLS || grid[row+r][col+c] !== 0) return false;
+    checkLines() {
+        let tr = [], tc = [];
+        for (let i = 0; i < 8; i++) {
+            if (this.state.grid[i].every(v => v !== 0)) tr.push(i);
+            if (this.state.grid.every(row => row[i] !== 0)) tc.push(i);
+        }
+        tr.forEach(r => this.state.grid[r].fill(0));
+        tc.forEach(c => this.state.grid.forEach(row => row[c] = 0));
+        if (tr.length || tc.length) {
+            this.state.score += (tr.length + tc.length) * 100;
+            this.updateUI();
+        }
+    },
+
+    updateUI() {
+        document.getElementById('scoreVal').innerText = this.state.score;
+        if (this.state.score > this.state.highScore) {
+            this.state.highScore = this.state.score;
+            localStorage.setItem('blockBlastHighScore', this.state.highScore);
+            document.getElementById('highScoreVal').innerText = this.state.highScore;
+        }
+    },
+
+    setupEvents() {
+        const getPos = e => {
+            const rect = this.canvas.getBoundingClientRect();
+            const t = e.touches ? e.touches[0] : e;
+            return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+        };
+        const start = e => {
+            const pos = getPos(e);
+            this.state.pieces.forEach(p => {
+                if (p.active && pos.y > p.y && pos.y < p.y + 100) this.state.dragging = p;
+            });
+        };
+        const move = e => {
+            if (!this.state.dragging) return;
+            const pos = getPos(e);
+            this.state.dragging.x = pos.x - 40;
+            this.state.dragging.y = pos.y - 120;
+        };
+        const end = () => {
+            if (!this.state.dragging) return;
+            const p = this.state.dragging;
+            const c = Math.round(p.x / this.state.cellSize), r = Math.round(p.y / this.state.cellSize);
+            
+            let canPlace = r >= 0 && r + p.matrix.length <= 8 && c >= 0 && c + p.matrix[0].length <= 8;
+            if(canPlace) {
+                p.matrix.forEach((row, pr) => row.forEach((cell, pc) => {
+                    if(cell && this.state.grid[r+pr][c+pc] !== 0) canPlace = false;
+                }));
             }
-        }
+
+            if (canPlace) {
+                p.matrix.forEach((row, pr) => row.forEach((cell, pc) => {
+                    if (cell) this.state.grid[r+pr][c+pc] = p.color;
+                }));
+                p.active = false;
+                this.checkLines();
+                if (this.state.pieces.every(pc => !pc.active)) this.spawnPieces();
+            } else {
+                p.x = p.ox; p.y = p.oy;
+            }
+            this.state.dragging = null;
+        };
+
+        this.canvas.addEventListener('touchstart', start);
+        window.addEventListener('touchmove', move, {passive: false});
+        window.addEventListener('touchend', end);
+        this.canvas.addEventListener('mousedown', start);
+        window.addEventListener('mousemove', move);
+        window.addEventListener('mouseup', end);
     }
-    return true;
-}
+};
 
-function checkLines() {
-    let tr = [], tc = [];
-    for (let r = 0; r < ROWS; r++) if (grid[r].every(v => v !== 0)) tr.push(r);
-    for (let c = 0; c < COLS; c++) {
-        let f = true;
-        for (let r = 0; r < ROWS; r++) if (grid[r][c] === 0) f = false;
-        if (f) tc.push(c);
-    }
-    
-    if (tr.length > 0 || tc.length > 0) {
-        tr.forEach(r => grid[r].fill(0));
-        tc.forEach(c => { for (let r = 0; r < ROWS; r++) grid[r][c] = 0; });
-        score += (tr.length + tc.length) * 100;
-
-        // المطلوب: يرتفع المستوى فقط عندما تتفوق على أفضل نتيجة
-        if (score > highScore) {
-            currentLevel++;
-            playSfx(1000, 'sine', 0.2);
-        }
-
-        updateScoreUI();
-        playSfx(800, 'square', 0.2);
-    }
-}
-
-function updateScoreUI() { 
-    scoreElement.innerText = score; 
-    highScore = Math.max(score, highScore);
-    localStorage.setItem('blockBlastHighScore', highScore);
-    highScoreElement.innerText = highScore;
-    levelElement.innerText = currentLevel;
-}
-
-function startDrag(e) {
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX || e.touches[0].clientX) - rect.left;
-    const y = (e.clientY || e.touches[0].clientY) - rect.top;
-    availablePieces.forEach(p => {
-        if (p.active && x > p.x && x < p.x + 80 && y > p.y && y < p.y + 80) {
-            draggingPiece = p; p.scale = 1.0;
-            dragOffsetX = (p.matrix[0].length * cellSize) / 2;
-            dragOffsetY = (p.matrix.length * cellSize) / 2;
-            playSfx(400, 'sine', 0.05);
-        }
-    });
-}
-
-function doDrag(e) {
-    if (!draggingPiece) return;
-    const rect = canvas.getBoundingClientRect();
-    draggingPiece.x = ((e.clientX || e.touches[0].clientX) - rect.left) - dragOffsetX;
-    draggingPiece.y = ((e.clientY || e.touches[0].clientY) - rect.top) - dragOffsetY - 70;
-    render();
-}
-
-canvas.addEventListener('touchstart', startDrag);
-window.addEventListener('touchmove', (e) => { if(draggingPiece) e.preventDefault(); doDrag(e); }, {passive: false});
-window.addEventListener('touchend', endDrag);
-canvas.addEventListener('mousedown', startDrag);
-window.addEventListener('mousemove', doDrag);
-window.addEventListener('mouseup', endDrag);
-
-window.onload = initGame;
+window.onload = () => Game.init();
