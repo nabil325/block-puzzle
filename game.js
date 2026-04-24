@@ -1,153 +1,222 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const scoreElement = document.getElementById('scoreVal');
-const highScoreElement = document.getElementById('highScoreVal');
 
-// 1. الإعدادات الأساسية
-const ROWS = 8;
-const COLS = 8;
-let cellSize = 0;
-let grid = [];
-let score = 0;
-let highScore = localStorage.getItem('blockBlastHighScore') || 0;
+// الإعدادات
+const ROWS = 8, COLS = 8;
+let cellSize, grid, score = 0, highScore = localStorage.getItem('bp_high') || 0;
+let availablePieces = [], draggingPiece = null, particles = [];
 
-const SHAPES = [
-    { matrix: [[1, 1, 1, 1]], color: '#2dd4bf' }, 
-    { matrix: [[1, 1], [1, 1]], color: '#fbbf24' }, 
-    { matrix: [[0, 1, 0], [1, 1, 1]], color: '#a855f7' }, 
-    { matrix: [[1, 1, 1], [1, 0, 0]], color: '#f87171' }, 
-    { matrix: [[1, 1, 0], [0, 1, 1]], color: '#4ade80' }, 
-    { matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: '#ec4899' }, 
-    { matrix: [[1]], color: '#94a3b8' } 
-];
-
-let availablePieces = [];
-let draggingPiece = null;
-let dragOffsetX = 0;
-let dragOffsetY = 0;
+const COLORS = {
+    '#2dd4bf': ['#2dd4bf', '#0d9488'], // Cyan
+    '#fbbf24': ['#fbbf24', '#b45309'], // Gold
+    '#a855f7': ['#a855f7', '#7e22ce'], // Purple
+    '#f87171': ['#f87171', '#b91c1c'], // Red
+    '#4ade80': ['#4ade80', '#15803d'], // Green
+    '#ec4899': ['#ec4899', '#be185d'], // Pink
+    '#94a3b8': ['#94a3b8', '#475569']  // Gray
+};
 
 function initGame() {
-    const containerWidth = Math.min(window.innerWidth - 40, 380); 
-    canvas.width = containerWidth;
-    canvas.height = containerWidth + 180; 
-    cellSize = containerWidth / COLS;
-
-    grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+    const size = Math.min(window.innerWidth - 60, 380);
+    canvas.width = size;
+    canvas.height = size + 180;
+    cellSize = size / COLS;
+    grid = Array.from({length: ROWS}, () => Array(COLS).fill(0));
     score = 0;
-    updateScoreUI();
+    updateUI();
     spawnPieces();
-    render();
+    requestAnimationFrame(gameLoop);
+}
+
+function createParticles(x, y, color) {
+    for(let i=0; i<8; i++) {
+        particles.push({
+            x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10,
+            life: 1, color
+        });
+    }
 }
 
 function spawnPieces() {
+    const SHAPES = [
+        {m: [[1,1,1,1]], c: '#2dd4bf'}, {m: [[1,1],[1,1]], c: '#fbbf24'},
+        {m: [[0,1,0],[1,1,1]], c: '#a855f7'}, {m: [[1,1,1],[1,0,0]], c: '#f87171'},
+        {m: [[1,1,0],[0,1,1]], c: '#4ade80'}, {m: [[1]], c: '#94a3b8'}
+    ];
     availablePieces = [];
-    for (let i = 0; i < 3; i++) {
-        const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+    for(let i=0; i<3; i++) {
+        const s = SHAPES[Math.floor(Math.random()*SHAPES.length)];
         availablePieces.push({
-            ...shape,
-            x: (canvas.width / 3) * i + 15,
-            y: canvas.width + 40,
-            originalX: (canvas.width / 3) * i + 15,
-            originalY: canvas.width + 40,
-            scale: 0.5,
-            active: true
+            ...s, x: (canvas.width/3)*i + 10, y: canvas.width + 50,
+            ox: (canvas.width/3)*i + 10, oy: canvas.width + 50,
+            active: true, scale: 0.5
         });
     }
 }
 
-function drawGrid() {
-    for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
-            const x = c * cellSize;
-            const y = r * cellSize;
-            ctx.fillStyle = "#1e293b"; 
-            ctx.beginPath();
-            ctx.roundRect(x + 2, y + 2, cellSize - 4, cellSize - 4, 6);
-            ctx.fill();
-
-            if (grid[r][c] !== 0) {
-                ctx.fillStyle = grid[r][c];
-                ctx.beginPath();
-                ctx.roundRect(x + 3, y + 3, cellSize - 6, cellSize - 6, 6);
-                ctx.fill();
-            }
-        }
-    }
-}
-
-function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawGrid();
+function drawBlock(x, y, color, size, isGhost = false) {
+    ctx.save();
+    ctx.globalAlpha = isGhost ? 0.3 : 1;
     
-    if (draggingPiece) {
-        const gCol = Math.round(draggingPiece.x / cellSize);
-        const gRow = Math.round(draggingPiece.y / cellSize);
-        if (canPlace(draggingPiece, gRow, gCol)) {
-            ctx.globalAlpha = 0.2;
-            draggingPiece.matrix.forEach((row, r) => {
-                row.forEach((cell, c) => {
-                    if (cell) {
-                        ctx.fillStyle = draggingPiece.color;
-                        ctx.beginPath();
-                        ctx.roundRect((gCol+c)*cellSize+4, (gRow+r)*cellSize+4, cellSize-8, cellSize-8, 4);
-                        ctx.fill();
-                    }
-                });
-            });
-            ctx.globalAlpha = 1.0;
+    // تدرج لوني احترافي للمكعب
+    const grd = ctx.createLinearGradient(x, y, x+size, y+size);
+    const palette = COLORS[color] || [color, color];
+    grd.addColorStop(0, palette[0]);
+    grd.addColorStop(1, palette[1]);
+    
+    ctx.fillStyle = grd;
+    ctx.shadowBlur = isGhost ? 0 : 15;
+    ctx.shadowColor = color;
+    
+    ctx.beginPath();
+    ctx.roundRect(x+3, y+3, size-6, size-6, 8);
+    ctx.fill();
+    
+    // إضافة لمعة علوية
+    ctx.fillStyle = "rgba(255,255,255,0.2)";
+    ctx.fillRect(x+6, y+6, size-12, size/4);
+    
+    ctx.restore();
+}
+
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // رسم الشبكة الخلفية
+    for(let r=0; r<ROWS; r++) {
+        for(let c=0; c<COLS; c++) {
+            ctx.fillStyle = "#1e293b";
+            ctx.beginPath();
+            ctx.roundRect(c*cellSize+2, r*cellSize+2, cellSize-4, cellSize-4, 8);
+            ctx.fill();
+            if(grid[r][c]) drawBlock(c*cellSize, r*cellSize, grid[r][c], cellSize);
         }
     }
 
-    availablePieces.forEach(piece => {
-        if (!piece.active) return;
-        const s = piece.scale * cellSize;
-        piece.matrix.forEach((row, r) => {
-            row.forEach((cell, c) => {
-                if (cell) {
-                    ctx.fillStyle = piece.color;
-                    ctx.beginPath();
-                    ctx.roundRect(piece.x + c * s, piece.y + r * s, s - 2, s - 2, 4);
-                    ctx.fill();
-                }
-            });
-        });
-    });
-}
-
-function endDrag() {
-    if (!draggingPiece) return;
-    const gCol = Math.round(draggingPiece.x / cellSize);
-    const gRow = Math.round(draggingPiece.y / cellSize);
-
-    if (canPlace(draggingPiece, gRow, gCol)) {
-        draggingPiece.matrix.forEach((rMat, r) => {
-            rMat.forEach((cell, c) => {
-                if (cell) grid[gRow + r][gCol + c] = draggingPiece.color;
-            });
-        });
-        draggingPiece.active = false;
-        checkLines();
-        if (availablePieces.every(pc => !pc.active)) spawnPieces();
-        if (!checkAnyMovePossible()) showGameOver();
-    } else {
-        draggingPiece.x = draggingPiece.originalX;
-        draggingPiece.y = draggingPiece.originalY;
-        draggingPiece.scale = 0.5;
+    // رسم خيال القطعة (Ghost)
+    if(draggingPiece) {
+        const gc = Math.round(draggingPiece.x/cellSize), gr = Math.round(draggingPiece.y/cellSize);
+        if(canPlace(draggingPiece, gr, gc)) {
+            draggingPiece.m.forEach((row, r) => row.forEach((cell, c) => {
+                if(cell) drawBlock((gc+c)*cellSize, (gr+r)*cellSize, draggingPiece.c, cellSize, true);
+            }));
+        }
     }
-    draggingPiece = null;
-    render();
+
+    // رسم القطع السفلية والجزيئات
+    availablePieces.forEach(p => {
+        if(!p.active) return;
+        const s = (draggingPiece === p ? 1 : 0.5) * cellSize;
+        p.m.forEach((row, r) => row.forEach((cell, c) => {
+            if(cell) drawBlock(p.x + c*s, p.y + r*s, p.c, s);
+        }));
+    });
+
+    particles.forEach((p, i) => {
+        p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+        ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
+        ctx.fillRect(p.x, p.y, 4, 4);
+        if(p.life <= 0) particles.splice(i, 1);
+    });
+    ctx.globalAlpha = 1;
+
+    requestAnimationFrame(gameLoop);
 }
 
-function checkAnyMovePossible() {
-    const activePieces = availablePieces.filter(p => p.active);
-    for (let piece of activePieces) {
-        for (let r = 0; r <= ROWS - piece.matrix.length; r++) {
-            for (let c = 0; c <= COLS - piece.matrix[0].length; c++) {
-                if (canPlace(piece, r, c)) return true;
+// ... منطق السحب والتحقق من الخطوط (كما في الكود الأصلي لكن مع إضافة الجزيئات) ...
+function checkLines() {
+    let rows = [], cols = [];
+    for(let i=0; i<8; i++) {
+        if(grid[i].every(v => v !== 0)) rows.push(i);
+        if(grid.every(r => r[i] !== 0)) cols.push(i);
+    }
+    
+    rows.forEach(r => {
+        for(let c=0; c<8; c++) {
+            createParticles(c*cellSize + cellSize/2, r*cellSize + cellSize/2, grid[r][c]);
+            grid[r][c] = 0;
+        }
+    });
+    cols.forEach(c => {
+        for(let r=0; r<8; r++) {
+            createParticles(c*cellSize + cellSize/2, r*cellSize + cellSize/2, grid[r][c]);
+            grid[r][c] = 0;
+        }
+    });
+
+    if(rows.length || cols.length) {
+        score += (rows.length + cols.length) * 100;
+        updateUI();
+    }
+}
+
+function updateUI() {
+    document.getElementById('scoreVal').innerText = score;
+    highScore = Math.max(score, highScore);
+    localStorage.setItem('bp_high', highScore);
+    document.getElementById('highScoreVal').innerText = highScore;
+}
+
+function canPlace(p, r, c) {
+    return p.m.every((row, pr) => row.every((cell, pc) => {
+        if(!cell) return true;
+        let nr = r + pr, nc = c + pc;
+        return nr>=0 && nr<ROWS && nc>=0 && nc<COLS && grid[nr][nc] === 0;
+    }));
+}
+
+// الأحداث (Input)
+function setupInput() {
+    const handleStart = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+        availablePieces.forEach(p => {
+            if(p.active && x > p.x && x < p.x + 80 && y > p.y && y < p.y + 80) {
+                draggingPiece = p;
+            }
+        });
+    };
+    const handleMove = (e) => {
+        if(!draggingPiece) return;
+        const rect = canvas.getBoundingClientRect();
+        draggingPiece.x = (e.clientX || e.touches[0].clientX) - rect.left - cellSize;
+        draggingPiece.y = (e.clientY || e.touches[0].clientY) - rect.top - cellSize - 60;
+    };
+    const handleEnd = () => {
+        if(!draggingPiece) return;
+        const gc = Math.round(draggingPiece.x/cellSize), gr = Math.round(draggingPiece.y/cellSize);
+        if(canPlace(draggingPiece, gr, gc)) {
+            draggingPiece.m.forEach((row, r) => row.forEach((cell, c) => {
+                if(cell) grid[gr+r][gc+c] = draggingPiece.c;
+            }));
+            draggingPiece.active = false;
+            checkLines();
+            if(availablePieces.every(p => !p.active)) spawnPieces();
+            if(!checkGameOver()) showGameOver();
+        } else {
+            draggingPiece.x = draggingPiece.ox; draggingPiece.y = draggingPiece.oy;
+        }
+        draggingPiece = null;
+    };
+
+    canvas.addEventListener('mousedown', handleStart);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    canvas.addEventListener('touchstart', handleStart);
+    window.addEventListener('touchmove', e => { e.preventDefault(); handleMove(e); }, {passive: false});
+    window.addEventListener('touchend', handleEnd);
+}
+
+function checkGameOver() {
+    return availablePieces.filter(p => p.active).some(p => {
+        for(let r=0; r<=ROWS-p.m.length; r++) {
+            for(let c=0; c<=COLS-p.m[0].length; c++) {
+                if(canPlace(p, r, c)) return true;
             }
         }
-    }
-    return false;
+        return false;
+    });
 }
 
 function showGameOver() {
@@ -160,66 +229,4 @@ function restartGame() {
     initGame();
 }
 
-function canPlace(piece, row, col) {
-    for (let r = 0; r < piece.matrix.length; r++) {
-        for (let c = 0; c < piece.matrix[r].length; c++) {
-            if (piece.matrix[r][c]) {
-                if (row+r < 0 || row+r >= ROWS || col+c < 0 || col+c >= COLS || grid[row+r][col+c] !== 0) return false;
-            }
-        }
-    }
-    return true;
-}
-
-function checkLines() {
-    let tr = [], tc = [];
-    for (let r = 0; r < ROWS; r++) if (grid[r].every(v => v !== 0)) tr.push(r);
-    for (let c = 0; c < COLS; c++) {
-        let f = true;
-        for (let r = 0; r < ROWS; r++) if (grid[r][c] === 0) f = false;
-        if (f) tc.push(c);
-    }
-    if (tr.length > 0 || tc.length > 0) {
-        tr.forEach(r => grid[r].fill(0));
-        tc.forEach(c => { for (let r = 0; r < ROWS; r++) grid[r][c] = 0; });
-        score += (tr.length + tc.length) * 100;
-        updateScoreUI();
-    }
-}
-
-function updateScoreUI() { 
-    scoreElement.innerText = score; 
-    highScore = Math.max(score, highScore);
-    localStorage.setItem('blockBlastHighScore', highScore);
-    highScoreElement.innerText = highScore;
-}
-
-function startDrag(e) {
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX || e.touches[0].clientX) - rect.left;
-    const y = (e.clientY || e.touches[0].clientY) - rect.top;
-    availablePieces.forEach(p => {
-        if (p.active && x > p.x && x < p.x + 80 && y > p.y && y < p.y + 80) {
-            draggingPiece = p; p.scale = 1.0;
-            dragOffsetX = (p.matrix[0].length * cellSize) / 2;
-            dragOffsetY = (p.matrix.length * cellSize) / 2;
-        }
-    });
-}
-
-function doDrag(e) {
-    if (!draggingPiece) return;
-    const rect = canvas.getBoundingClientRect();
-    draggingPiece.x = ((e.clientX || e.touches[0].clientX) - rect.left) - dragOffsetX;
-    draggingPiece.y = ((e.clientY || e.touches[0].clientY) - rect.top) - dragOffsetY - 70;
-    render();
-}
-
-canvas.addEventListener('touchstart', startDrag);
-window.addEventListener('touchmove', (e) => { if(draggingPiece) e.preventDefault(); doDrag(e); }, {passive: false});
-window.addEventListener('touchend', endDrag);
-canvas.addEventListener('mousedown', startDrag);
-window.addEventListener('mousemove', doDrag);
-window.addEventListener('mouseup', endDrag);
-
-window.onload = initGame;
+window.onload = () => { setupInput(); initGame(); };
