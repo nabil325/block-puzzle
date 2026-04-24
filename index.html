@@ -2,64 +2,42 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Block Puzzle: Art & Classic</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Block Blast Clone</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div id="mainMenu" class="overlay active">
-        <div class="menu-content">
-            <div class="logo-area">
-                <div class="logo-text-wrapper">
-                    <span class="crown-logo">👑</span>
-                    <h1 class="game-title">BLOCK<br>PUZZLE</h1>
-                </div>
-                <p class="subtitle">تحدَّ ذكاءك في عالم من الكتل</p>
+    <div class="game-container">
+        <div class="header">
+            <div class="stat-box">
+                <span class="label">النتيجة</span>
+                <span id="scoreVal" class="value">0</span>
             </div>
-
-            <div class="modes-grid">
-                <div class="mode-card classic" onclick="Game.start('classic')">
-                    <div class="card-glow"></div>
-                    <div class="card-details">
-                        <span class="mode-name">التصنيف الكلاسيكي</span>
-                        <span class="mode-desc">نقاط بلا حدود وتحدي مستمر</span>
-                    </div>
-                    <div class="mode-preview">
-                        <div class="mini-block cyan"></div>
-                    </div>
-                </div>
-
-                <div class="mode-card puzzle" onclick="Game.start('puzzle')">
-                    <div class="card-glow"></div>
-                    <div class="card-details">
-                        <span class="mode-name">نمط الألغاز</span>
-                        <span class="mode-desc">اكشف اللوحات الفنية المخفية</span>
-                    </div>
-                    <div class="mode-preview art-icon">🖼️</div>
-                </div>
+            <div class="stat-box highlight">
+                <span class="label">المستوى</span>
+                <span id="levelVal" class="value">1</span>
             </div>
-        </div>
-    </div>
-
-    <div id="gameUI" class="game-layout hidden">
-        <header class="game-header">
-            <div class="score-pill best">
+            <div class="stat-box">
                 <span class="label">أفضل نتيجة</span>
-                <span id="highScoreVal">1950</span>
+                <span id="highScoreVal" class="value">0</span>
             </div>
-            <div class="score-pill current">
-                <span class="crown-icon">👑</span>
-                <span id="scoreVal">0</span>
-            </div>
-        </header>
+        </div>
 
-        <div class="canvas-wrapper">
-            <canvas id="gameCanvas"></canvas>
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="gameOverModal" class="modal">
+            <div class="modal-content">
+                <h2>انتهت اللعبة!</h2>
+                <div class="final-stats">
+                    <p id="finalLevelDisplay">المستوى: 1</p>
+                    <p id="finalScoreDisplay">0 👑</p>
+                </div>
+                <button onclick="restartGame()">حاول مجدداً</button>
+            </div>
         </div>
     </div>
 
-    <script src="game.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
