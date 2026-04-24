@@ -1,102 +1,98 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const splash = document.getElementById('mainMenu');
-const gameUI = document.getElementById('gameUI');
 const scoreElement = document.getElementById('scoreVal');
 const highScoreElement = document.getElementById('highScoreVal');
+const levelElement = document.getElementById('levelVal');
 
-// إعدادات اللعبة
-let gameMode = 'classic'; // 'classic' أو 'puzzle'
-const ROWS = 8, COLS = 8;
-let cellSize = 0, grid = [], score = 0;
-let highScore = localStorage.getItem('blockPuzzleBest') || 1950;
-
-// تحميل صورة الألغاز (اختياري)
-const puzzleImg = new Image();
-puzzleImg.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg/402px-Mona_Lisa%2C_by_Leonardo_da_Vinci%2C_from_C2RMF_retouched.jpg';
-
-// نظام الصوت المدمج
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playSfx(f, t, d) {
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-    o.type = t; o.frequency.value = f;
-    g.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + d);
-    o.connect(g); g.connect(audioCtx.destination);
-    o.start(); o.stop(audioCtx.currentTime + d);
-}
+// 1. الإعدادات الأساسية
+const ROWS = 8;
+const COLS = 8;
+let cellSize = 0;
+let grid = [];
+let score = 0;
+let currentLevel = 1;
+let highScore = localStorage.getItem('blockBlastHighScore') || 0;
 
 const SHAPES = [
-    { matrix: [[1,1,1,1]], color: ['#2dd4bf', '#0d9488'] }, // فيروزي متدرج
-    { matrix: [[1,1],[1,1]], color: ['#facc15', '#ca8a04'] }, // ذهبي متدرج
-    { matrix: [[0,1,0],[1,1,1]], color: ['#a855f7', '#7e22ce'] }, // بنفسجي متدرج
-    { matrix: [[1,1,0],[0,1,1]], color: ['#f87171', '#dc2626'] }  // أحمر مرجاني
+    { matrix: [[1, 1, 1, 1]], color: '#2dd4bf' }, // خط
+    { matrix: [[1, 1], [1, 1]], color: '#fbbf24' }, // مربع
+    { matrix: [[0, 1, 0], [1, 1, 1]], color: '#a855f7' }, // حرف T
+    { matrix: [[1, 1, 1], [1, 0, 0]], color: '#f87171' }, // حرف L
+    { matrix: [[1, 1, 0], [0, 1, 1]], color: '#4ade80' }, // حرف Z
+    { matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], color: '#ec4899' }, // مربع كبير
+    { matrix: [[1]], color: '#94a3b8' } // نقطة
 ];
 
-let availablePieces = [], draggingPiece = null, dragOffsetX = 0, dragOffsetY = 0;
+let availablePieces = [];
+let draggingPiece = null;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
 
-function startMode(mode) {
-    gameMode = mode;
-    splash.classList.remove('active');
-    gameUI.classList.remove('hidden');
-    playSfx(500, 'sine', 0.1);
-    initGame();
+// نظام الصوت
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSfx(freq, type, dur) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + dur);
 }
 
+// بدء اللعبة
 function initGame() {
-    const parent = canvas.parentNode;
-    canvas.width = parent.clientWidth;
-    canvas.height = parent.clientHeight;
-    cellSize = canvas.width / COLS;
-    grid = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+    const containerWidth = Math.min(window.innerWidth - 80, 380); 
+    canvas.width = containerWidth;
+    canvas.height = containerWidth + 180; 
+    cellSize = containerWidth / COLS;
+
+    grid = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
     score = 0;
+    // تم حذف تصفير المستوى هنا ليبقى المستوى مرتبطاً بتحطيم الرقم القياسي دائماً
     updateScoreUI();
     spawnPieces();
     render();
 }
 
+// توليد القطع مع زيادة الصعوبة تدريجياً
 function spawnPieces() {
     availablePieces = [];
-    for(let i=0; i<3; i++) {
-        const s = SHAPES[Math.floor(Math.random()*SHAPES.length)];
+    for (let i = 0; i < 3; i++) {
+        let range = Math.min(SHAPES.length, 4 + Math.floor(currentLevel / 50));
+        const shape = SHAPES[Math.floor(Math.random() * range)];
         availablePieces.push({
-            ...s, x: (canvas.width/3)*i + (canvas.width/12), y: canvas.width + 60,
-            origX: (canvas.width/3)*i + (canvas.width/12), origY: canvas.width + 60,
-            active: true, scale: 0.5
+            ...shape,
+            x: (canvas.width / 3) * i + 15,
+            y: canvas.width + 40,
+            originalX: (canvas.width / 3) * i + 15,
+            originalY: canvas.width + 40,
+            scale: 0.5,
+            active: true
         });
     }
 }
 
-function drawBlock(x, y, colors, size, r, c) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(x+3, y+3, size-6, size-6, 10); // حواف منحنية احترافية
-    ctx.clip();
-    if(gameMode === 'puzzle' && puzzleImg.complete) {
-        ctx.drawImage(puzzleImg, 0, 0, puzzleImg.width, puzzleImg.height, 0, 0, canvas.width, canvas.width);
-    } else {
-        const grd = ctx.createLinearGradient(x, y, x, y+size);
-        grd.addColorStop(0, colors[0]);
-        grd.addColorStop(1, colors[1]);
-        ctx.fillStyle = grd;
-        ctx.fill();
-        // تأثير لمعان
-        ctx.fillStyle = "rgba(255,255,255,0.15)";
-        ctx.fillRect(x+3, y+3, size-6, (size-6)/2);
-    }
-    ctx.restore();
-}
-
+// رسم الشبكة
 function drawGrid() {
-    for(let r=0; r<ROWS; r++) {
-        for(let c=0; c<COLS; c++) {
-            const x = c*cellSize, y = r*cellSize;
-            ctx.fillStyle = "#111a2e"; // خلفية المربعات الداكنة
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            const x = c * cellSize;
+            const y = r * cellSize;
+            ctx.fillStyle = "#1e293b"; 
             ctx.beginPath();
-            ctx.roundRect(x+3, y+3, cellSize-6, cellSize-6, 12);
+            ctx.roundRect(x + 2, y + 2, cellSize - 4, cellSize - 4, 6);
             ctx.fill();
-            if(grid[r][c]) drawBlock(x, y, grid[r][c], cellSize, r, c);
+
+            if (grid[r][c] !== 0) {
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = grid[r][c];
+                ctx.fillStyle = grid[r][c];
+                ctx.beginPath();
+                ctx.roundRect(x + 3, y + 3, cellSize - 6, cellSize - 6, 6);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
         }
     }
 }
@@ -105,99 +101,171 @@ function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawGrid();
     
-    // رسم خيال القطعة أثناء السحب
-    if(draggingPiece) {
-        const gCol = Math.round(draggingPiece.x/cellSize);
-        const gRow = Math.round(draggingPiece.y/cellSize);
-        if(canPlace(draggingPiece, gRow, gCol)) {
+    if (draggingPiece) {
+        const gCol = Math.round(draggingPiece.x / cellSize);
+        const gRow = Math.round(draggingPiece.y / cellSize);
+        if (canPlace(draggingPiece, gRow, gCol)) {
             ctx.globalAlpha = 0.2;
-            draggingPiece.matrix.forEach((row, r) => row.forEach((cell, c) => {
-                if(cell) drawBlock((gCol+c)*cellSize, (gRow+r)*cellSize, draggingPiece.color, cellSize);
-            }));
+            draggingPiece.matrix.forEach((row, r) => {
+                row.forEach((cell, c) => {
+                    if (cell) {
+                        ctx.fillStyle = draggingPiece.color;
+                        ctx.beginPath();
+                        ctx.roundRect((gCol+c)*cellSize+4, (gRow+r)*cellSize+4, cellSize-8, cellSize-8, 4);
+                        ctx.fill();
+                    }
+                });
+            });
             ctx.globalAlpha = 1.0;
         }
     }
 
-    // رسم القطع السفلية
-    availablePieces.forEach(p => {
-        if(!p.active) return;
-        const s = (draggingPiece === p ? 1 : 0.6) * cellSize; // تكبير القطع قليلاً
-        p.matrix.forEach((row, r) => row.forEach((cell, c) => {
-            if(cell) drawBlock(p.x + c*s, p.y + r*s, p.color, s);
-        }));
+    availablePieces.forEach(piece => {
+        if (!piece.active) return;
+        const s = piece.scale * cellSize;
+        piece.matrix.forEach((row, r) => {
+            row.forEach((cell, c) => {
+                if (cell) {
+                    ctx.fillStyle = piece.color;
+                    ctx.beginPath();
+                    ctx.roundRect(piece.x + c * s, piece.y + r * s, s - 2, s - 2, 4);
+                    ctx.fill();
+                }
+            });
+        });
     });
-    requestAnimationFrame(render);
 }
 
-// ... بقية منطق السحب، الوضع، وحذف الخطوط (نفس المنطق من الصورة 1) ...
+function endDrag() {
+    if (!draggingPiece) return;
+    const gCol = Math.round(draggingPiece.x / cellSize);
+    const gRow = Math.round(draggingPiece.y / cellSize);
+
+    if (canPlace(draggingPiece, gRow, gCol)) {
+        draggingPiece.matrix.forEach((rMat, r) => {
+            rMat.forEach((cell, c) => {
+                if (cell) grid[gRow + r][gCol + c] = draggingPiece.color;
+            });
+        });
+        draggingPiece.active = false;
+        playSfx(600, 'triangle', 0.1);
+        checkLines();
+        
+        if (availablePieces.every(pc => !pc.active)) spawnPieces();
+
+        if (!checkAnyMovePossible()) {
+            showGameOver();
+        }
+    } else {
+        draggingPiece.x = draggingPiece.originalX;
+        draggingPiece.y = draggingPiece.originalY;
+        draggingPiece.scale = 0.5;
+    }
+    draggingPiece = null;
+    render();
+}
+
+function checkAnyMovePossible() {
+    const activePieces = availablePieces.filter(p => p.active);
+    for (let piece of activePieces) {
+        for (let r = 0; r <= ROWS - piece.matrix.length; r++) {
+            for (let c = 0; c <= COLS - piece.matrix[0].length; c++) {
+                if (canPlace(piece, r, c)) return true;
+            }
+        }
+    }
+    return false;
+}
+
+// تعديل: نافذة GameOver احترافية كما طلبت
+function showGameOver() {
+    const modal = document.getElementById('gameOverModal');
+    // تحديث البيانات داخل الرسالة الاحترافية
+    if (document.getElementById('finalLevelDisplay')) {
+        document.getElementById('finalLevelDisplay').innerText = "المستوى: " + currentLevel;
+    }
+    if (document.getElementById('finalScoreDisplay')) {
+        document.getElementById('finalScoreDisplay').innerText = score + " 👑";
+    }
+    modal.style.display = 'flex';
+}
+
+function restartGame() {
+    document.getElementById('gameOverModal').style.display = 'none';
+    initGame();
+}
 
 function canPlace(piece, row, col) {
-    for(let r=0; r<piece.matrix.length; r++) {
-        for(let c=0; c<piece.matrix[r].length; c++) {
-            if(piece.matrix[r][c]) {
-                if(row+r<0 || row+r>=ROWS || col+c<0 || col+c>=COLS || grid[row+r][col+c]!==0) return false;
+    for (let r = 0; r < piece.matrix.length; r++) {
+        for (let c = 0; c < piece.matrix[r].length; c++) {
+            if (piece.matrix[r][c]) {
+                if (row+r < 0 || row+r >= ROWS || col+c < 0 || col+c >= COLS || grid[row+r][col+c] !== 0) return false;
             }
         }
     }
     return true;
 }
 
-function endDrag() {
-    if(!draggingPiece) return;
-    const gCol = Math.round(draggingPiece.x/cellSize), gRow = Math.round(draggingPiece.y/cellSize);
-    if(canPlace(draggingPiece, gRow, gCol)) {
-        draggingPiece.matrix.forEach((rMat, r) => rMat.forEach((cell, c) => {
-            if(cell) grid[gRow+r][gCol+c] = draggingPiece.color;
-        }));
-        draggingPiece.active = false;
-        playSfx(400, 'triangle', 0.1);
-        if(gameMode === 'classic') checkLines();
-        else { score += 50; updateScoreUI(); }
-        if(availablePieces.every(p => !p.active)) spawnPieces();
-    } else {
-        draggingPiece.x = draggingPiece.origX; draggingPiece.y = draggingPiece.origY;
-    }
-    draggingPiece = null;
-}
-
 function checkLines() {
-    let toRemoveR = [], toRemoveC = [];
-    for(let i=0; i<8; i++) {
-        if(grid[i].every(v => v !== 0)) toRemoveR.push(i);
-        if(grid.every(row => row[i] !== 0)) toRemoveC.push(i);
+    let tr = [], tc = [];
+    for (let r = 0; r < ROWS; r++) if (grid[r].every(v => v !== 0)) tr.push(r);
+    for (let c = 0; c < COLS; c++) {
+        let f = true;
+        for (let r = 0; r < ROWS; r++) if (grid[r][c] === 0) f = false;
+        if (f) tc.push(c);
     }
-    toRemoveR.forEach(r => grid[r].fill(0));
-    toRemoveC.forEach(c => grid.forEach(row => row[c] = 0));
-    if(toRemoveR.length || toRemoveC.length) {
-        score += (toRemoveR.length + toRemoveC.length) * 100;
-        updateScoreUI(); playSfx(800, 'sine', 0.3);
+    
+    if (tr.length > 0 || tc.length > 0) {
+        tr.forEach(r => grid[r].fill(0));
+        tc.forEach(c => { for (let r = 0; r < ROWS; r++) grid[r][c] = 0; });
+        score += (tr.length + tc.length) * 100;
+
+        // المطلوب: يرتفع المستوى فقط عندما تتفوق على أفضل نتيجة
+        if (score > highScore) {
+            currentLevel++;
+            playSfx(1000, 'sine', 0.2);
+        }
+
+        updateScoreUI();
+        playSfx(800, 'square', 0.2);
     }
 }
 
-function updateScoreUI() { scoreElement.innerText = score; highScoreElement.innerText = Math.max(score, highScore); }
-
-// معالجة اللمس والسحب الاحترافية
-function setupInput() {
-    const getPos = e => {
-        const rect = canvas.getBoundingClientRect();
-        const t = e.touches ? e.touches[0] : e;
-        return { x: t.clientX - rect.left, y: t.clientY - rect.top };
-    };
-    const start = e => {
-        const pos = getPos(e);
-        availablePieces.forEach(p => {
-            if(p.active && pos.x > p.x-20 && pos.x < p.x+80) {
-                draggingPiece = p; dragOffsetX = cellSize/2; dragOffsetY = cellSize*1.5;
-            }
-        });
-    };
-    const move = e => {
-        if(!draggingPiece) return; e.preventDefault(); const pos = getPos(e);
-        draggingPiece.x = pos.x - dragOffsetX; draggingPiece.y = pos.y - dragOffsetY;
-    };
-    const end = () => endDrag();
-    canvas.addEventListener('touchstart', start); window.addEventListener('touchmove', move, {passive:false}); window.addEventListener('touchend', end);
-    canvas.addEventListener('mousedown', start); window.addEventListener('mousemove', move); window.addEventListener('mouseup', end);
+function updateScoreUI() { 
+    scoreElement.innerText = score; 
+    highScore = Math.max(score, highScore);
+    localStorage.setItem('blockBlastHighScore', highScore);
+    highScoreElement.innerText = highScore;
+    levelElement.innerText = currentLevel;
 }
 
-window.onload = () => { setupInput(); initGame(); Game = { start: startMode }; }; // ربط دالة startMode
+function startDrag(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX || e.touches[0].clientX) - rect.left;
+    const y = (e.clientY || e.touches[0].clientY) - rect.top;
+    availablePieces.forEach(p => {
+        if (p.active && x > p.x && x < p.x + 80 && y > p.y && y < p.y + 80) {
+            draggingPiece = p; p.scale = 1.0;
+            dragOffsetX = (p.matrix[0].length * cellSize) / 2;
+            dragOffsetY = (p.matrix.length * cellSize) / 2;
+            playSfx(400, 'sine', 0.05);
+        }
+    });
+}
+
+function doDrag(e) {
+    if (!draggingPiece) return;
+    const rect = canvas.getBoundingClientRect();
+    draggingPiece.x = ((e.clientX || e.touches[0].clientX) - rect.left) - dragOffsetX;
+    draggingPiece.y = ((e.clientY || e.touches[0].clientY) - rect.top) - dragOffsetY - 70;
+    render();
+}
+
+canvas.addEventListener('touchstart', startDrag);
+window.addEventListener('touchmove', (e) => { if(draggingPiece) e.preventDefault(); doDrag(e); }, {passive: false});
+window.addEventListener('touchend', endDrag);
+canvas.addEventListener('mousedown', startDrag);
+window.addEventListener('mousemove', doDrag);
+window.addEventListener('mouseup', endDrag);
+
+window.onload = initGame;
