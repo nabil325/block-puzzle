@@ -2,51 +2,67 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Block Puzzle</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Block Puzzle Pro</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div id="splashScreen" class="overlay-screen">
-        <h1 class="game-title">BLOCK<br>PUZZLE</h1>
-        <p class="tap-to-play">اضغط للبدء</p>
-    </div>
-
-    <div id="modeSelection" class="overlay-screen" style="display: none;">
-        <h2 class="menu-title">اختر نمط اللعب</h2>
-        <div class="mode-buttons">
-            <button onclick="startMode('classic')" class="mode-btn">
-                <span class="btn-icon">🟦</span>
-                التصنيف الكلاسيكي
-            </button>
-            <button onclick="startMode('puzzle')" class="mode-btn">
-                <span class="btn-icon">🎨</span>
-                نمط الألغاز (الموناليزا)
-            </button>
-        </div>
-    </div>
-
-    <div class="game-container">
-        <div class="top-bar">
-            <div class="stat-item">
-                <span class="stat-label">أفضل نتيجة</span>
-                <span id="highScoreVal" class="stat-value" style="color: #facc15;">0</span>
-            </div>
-            <div class="stat-item">
+    <div id="mainMenu" class="ui-overlay active">
+        <div class="hero-section">
+            <div class="logo-container">
+                <div class="logo-glow"></div>
                 <span class="crown-icon">👑</span>
-                <span id="scoreVal" class="stat-value" style="color: #2dd4bf;">0</span>
+                <h1 class="main-title">BLOCK<br>PUZZLE</h1>
+            </div>
+            <p class="subtitle">تحدَّ ذكاءك في عالم من الكتل</p>
+        </div>
+
+        <div class="selection-grid">
+            <div class="mode-card classic" onclick="Game.start('classic')">
+                <div class="card-content">
+                    <h3>التصنيف الكلاسيكي</h3>
+                    <p>نقاط بلا حدود وتحدي مستمر</p>
+                </div>
+                <div class="card-visual">🟦</div>
+            </div>
+
+            <div class="mode-card puzzle" onclick="Game.start('puzzle')">
+                <div class="card-content">
+                    <h3>نمط الألغاز</h3>
+                    <p>اكتشف اللوحات الفنية المخفية</p>
+                </div>
+                <div class="card-visual">🖼️</div>
             </div>
         </div>
-        <canvas id="gameCanvas"></canvas>
     </div>
 
-    <div id="gameOverModal">
-        <div class="modal-card">
-            <h1 style="color: #f87171;">انتهت اللعبة!</h1>
-            <div id="finalScoreDisplay" style="font-size: 3rem; margin: 20px 0;">0 👑</div>
-            <button class="restart-btn" onclick="restartGame()">العودة للقائمة</button>
+    <main class="game-wrapper">
+        <header class="game-header">
+            <div class="stat-box best">
+                <small>أفضل نتيجة</small>
+                <span id="highScoreVal">1950</span>
+            </div>
+            <div class="stat-box current">
+                <span class="crown-small">👑</span>
+                <span id="scoreVal">0</span>
+            </div>
+        </header>
+
+        <div class="canvas-container">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+    </main>
+
+    <div id="gameOverModal" class="modal">
+        <div class="modal-body">
+            <h2 class="title-died">انتهت اللعبة</h2>
+            <div class="final-score-wrap">
+                <span>النتيجة النهائية</span>
+                <strong id="finalScoreDisplay">0</strong>
+            </div>
+            <button class="btn-primary" onclick="Game.reset()">العودة للقائمة</button>
         </div>
     </div>
 
