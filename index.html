@@ -3,55 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Block Puzzle Elite</title>
+    <title>Block Puzzle Pro</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@500;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-
-    <div id="mainMenu" class="full-screen-overlay">
-        <div class="menu-content">
-            <div class="logo-area">
-                <span class="crown-glow">👑</span>
-                <h1 class="logo-text">BLOCK<br>PUZZLE</h1>
-                <p class="tagline">تحدَّ ذكاءك في عالم من الكتل</p>
-            </div>
-
-            <div class="modes-container">
-                <div class="mode-card" onclick="Game.start('classic')">
-                    <div class="mode-info">
-                        <h3>التصنيف الكلاسيكي</h3>
-                        <p>نقاط بلا حدود وتحدي مستمر</p>
-                    </div>
-                    <div class="mode-preview">🟦</div>
-                </div>
-
-                <div class="mode-card" onclick="Game.start('puzzle')">
-                    <div class="mode-info">
-                        <h3>نمط الألغاز</h3>
-                        <p>اكتشف اللوحات الفنية المخفية</p>
-                    </div>
-                    <div class="mode-preview">🖼️</div>
-                </div>
+    <div id="mainMenu" class="overlay">
+        <div class="menu-box">
+            <h1 class="title">BLOCK<br>PUZZLE</h1>
+            <div class="modes">
+                <button class="mode-btn" onclick="Game.start('classic')">
+                    <span>🟦</span> التصنيف الكلاسيكي
+                </button>
+                <button class="mode-btn" onclick="Game.start('puzzle')">
+                    <span>🎨</span> نمط الألغاز
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="gameUI" class="game-layout hidden">
-        <header class="game-header">
-            <div class="score-pill best">
-                <span class="label">أفضل نتيجة</span>
-                <span id="highScoreVal">1950</span>
+    <div id="gameUI" class="hidden">
+        <div class="header">
+            <div class="stat">
+                <small>أفضل نتيجة</small>
+                <span id="highScore">1950</span>
             </div>
-            <div class="score-pill current">
-                <span class="icon">👑</span>
-                <span id="scoreVal">0</span>
+            <div class="stat">
+                <span class="crown">👑</span>
+                <span id="currentScore">0</span>
             </div>
-        </header>
-
-        <div class="canvas-wrapper">
-            <canvas id="gameCanvas"></canvas>
         </div>
+        <canvas id="gameCanvas"></canvas>
     </div>
 
     <script src="game.js"></script>
