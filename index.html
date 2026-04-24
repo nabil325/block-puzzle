@@ -2,66 +2,31 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Block Puzzle: Elite</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Block Puzzle</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-
-    <div id="mainMenu" class="ui-overlay active">
-        <div class="menu-content">
-            <div class="logo-section">
-                <span class="crown-main">👑</span>
-                <h1 class="game-title">BLOCK<br>PUZZLE</h1>
-                <p class="tagline">تحدَّ ذكاءك في عالم من الكتل</p>
+    <div class="game-container">
+        <div class="score-board">
+            <div class="stat-box">
+                <span class="crown">👑</span>
+                <div id="scoreVal">0</div>
             </div>
-
-            <div class="modes-grid">
-                <div class="mode-card" onclick="Game.start('classic')">
-                    <div class="card-info">
-                        <h3>التصنيف الكلاسيكي</h3>
-                        <p>نقاط بلا حدود وتحدي مستمر</p>
-                    </div>
-                    <div class="card-icon">🟦</div>
-                </div>
-
-                <div class="mode-card" onclick="Game.start('puzzle')">
-                    <div class="card-info">
-                        <h3>نمط الألغاز</h3>
-                        <p>اكشف اللوحة الفنية المخفية</p>
-                    </div>
-                    <div class="card-icon">🖼️</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="gameUI" class="game-container hidden">
-        <header class="header-bar">
-            <div class="stat-pill best">
+            <div class="stat-box">
                 <small>أفضل نتيجة</small>
-                <span id="highScoreVal">0</span>
+                <div id="highScoreVal">0</div>
             </div>
-            <div class="stat-pill score">
-                <span class="crown-small">👑</span>
-                <span id="scoreVal">0</span>
-            </div>
-        </header>
-
-        <div class="canvas-holder">
-            <canvas id="gameCanvas"></canvas>
         </div>
+        
+        <canvas id="gameCanvas"></canvas>
     </div>
 
     <div id="gameOverModal" class="modal">
         <div class="modal-content">
-            <h2>انتهت اللعبة</h2>
-            <div class="final-score-box">
-                <p>النتيجة النهائية</p>
-                <h3 id="finalScoreDisplay">0 👑</h3>
-            </div>
-            <button class="btn-restart" onclick="location.reload()">العودة للرئيسية</button>
+            <h2>انتهت اللعبة!</h2>
+            <p>النتيجة: <span id="finalScoreDisplay">0</span></p>
+            <button onclick="restartGame()">إعادة المحاولة</button>
         </div>
     </div>
 
