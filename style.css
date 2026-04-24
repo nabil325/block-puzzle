@@ -1,124 +1,41 @@
-/* إعدادات عامة */
 :root {
-    --bg-color: #0f172a;
-    --card-bg: #1e293b;
-    --text-color: #f8fafc;
-    --accent-color: #38bdf8;
-    --danger-color: #ef4444;
+    --bg: #050811;
+    --surface: #121826;
+    --accent: #2dd4bf;
+    --gold: #facc15;
 }
 
-body {
-    margin: 0;
-    padding: 0;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    overflow: hidden;
-    touch-action: none; /* لمنع التمرير أثناء اللعب */
-}
+* { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: white; overflow: hidden; height: 100vh; }
 
-.game-container {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    max-width: 400px;
-}
+/* القائمة الاحترافية */
+.ui-overlay { position: fixed; inset: 0; z-index: 100; background: radial-gradient(circle, #1a2333 0%, var(--bg) 100%); display: flex; align-items: center; justify-content: center; transition: 0.5s ease-out; }
+.ui-overlay.hidden { transform: translateY(-100%); visibility: hidden; }
 
-/* شريط المعلومات */
-.header {
-    display: flex;
-    justify-content: space-around;
-    width: 100%;
-    margin-bottom: 20px;
-}
+.game-title { font-size: 3.5rem; font-weight: 900; line-height: 0.8; margin: 15px 0; background: linear-gradient(to bottom, #fff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.tagline { color: #94a3b8; margin-bottom: 40px; }
 
-.stat-box {
-    background: var(--card-bg);
-    padding: 10px 15px;
-    border-radius: 12px;
-    text-align: center;
-    min-width: 80px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
+.modes-grid { width: 90%; max-width: 360px; display: flex; flex-direction: column; gap: 15px; }
+.mode-card { background: var(--surface); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+.mode-card h3 { font-size: 1.2rem; margin-bottom: 4px; }
+.mode-card p { font-size: 0.8rem; color: #94a3b8; }
+.card-icon { font-size: 2rem; }
 
-.stat-box.highlight {
-    border: 2px solid var(--accent-color);
-}
+/* واجهة اللعبة */
+.game-container { display: flex; flex-direction: column; align-items: center; padding-top: 20px; height: 100vh; }
+.game-container.hidden { display: none; }
 
-.label {
-    display: block;
-    font-size: 0.8rem;
-    color: #94a3b8;
-    margin-bottom: 4px;
-}
+.header-bar { display: flex; justify-content: space-between; width: 90%; max-width: 400px; margin-bottom: 20px; }
+.stat-pill { background: var(--surface); padding: 12px 20px; border-radius: 15px; text-align: center; min-width: 130px; }
+.stat-pill small { display: block; font-size: 0.7rem; color: #94a3b8; }
+.stat-pill span { font-size: 1.5rem; font-weight: 900; }
+.score { color: var(--accent); border-bottom: 3px solid var(--accent); }
+.best { color: var(--gold); border-bottom: 3px solid var(--gold); }
 
-.value {
-    font-size: 1.2rem;
-    font-weight: bold;
-}
+.canvas-holder { background: #0f172a; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+canvas { display: block; }
 
-/* الكانفاس */
-canvas {
-    background-color: #0f172a;
-    border-radius: 16px;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-    cursor: pointer;
-}
-
-/* نافذة Game Over */
-.modal {
-    display: none; /* مخفية افتراضياً */
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(15, 23, 42, 0.85);
-    backdrop-filter: blur(5px);
-    z-index: 10;
-    justify-content: center;
-    align-items: center;
-    border-radius: 16px;
-}
-
-.modal-content {
-    background: var(--card-bg);
-    padding: 30px;
-    border-radius: 24px;
-    text-align: center;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-}
-
-.modal-content h2 {
-    margin-top: 0;
-    color: var(--danger-color);
-    font-size: 2rem;
-}
-
-.final-stats {
-    margin: 20px 0;
-    font-size: 1.2rem;
-}
-
-button {
-    background: var(--accent-color);
-    color: var(--bg-color);
-    border: none;
-    padding: 12px 24px;
-    font-size: 1.1rem;
-    font-weight: bold;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-button:hover {
-    transform: scale(1.05);
-}
+/* النافذة المنبثقة */
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 200; }
+.modal-content { background: var(--surface); padding: 40px; border-radius: 30px; text-align: center; width: 85%; max-width: 320px; }
+.btn-restart { background: var(--accent); border: none; padding: 15px; border-radius: 15px; width: 100%; font-weight: 900; margin-top: 20px; cursor: pointer; }
