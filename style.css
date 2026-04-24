@@ -1,84 +1,124 @@
+/* إعدادات عامة */
 :root {
-    --bg-dark: #070a16;
-    --card-bg: #111a2e;
-    --text-primary: #f8fafc;
-    --text-dim: #94a3b8;
-    --accent-cyan: #2dd4bf;
-    --accent-gold: #facc15;
-    --shadow: 0 10px 30px rgba(0,0,0,0.5);
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    --text-color: #f8fafc;
+    --accent-color: #38bdf8;
+    --danger-color: #ef4444;
 }
 
-/* تصفير الإعدادات الأساسية */
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-body { 
-    font-family: 'Tajawal', sans-serif; background: var(--bg-dark); 
-    color: var(--text-primary); overflow: hidden; height: 100vh;
-}
-
-/* الشاشات المتداخلة */
-.overlay {
-    position: fixed; inset: 0; z-index: 1000;
-    background: radial-gradient(circle at center, #1e293b 0%, var(--bg-dark) 100%);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-}
-.overlay:not(.active) { transform: translateY(-100%); pointer-events: none; }
-
-/* تصميم شعار احترافي */
-.logo-area { text-align: center; margin-bottom: 50px; position: relative; }
-.logo-text-wrapper { position: relative; display: inline-block; }
-.crown-logo { font-size: 2.5rem; position: absolute; top: -30px; left: 50%; transform: translateX(-50%); }
-.game-title { 
-    font-size: 4.5rem; font-weight: 900; line-height: 0.85; margin: 0;
-    background: linear-gradient(to bottom, #fff, #b7c4d7);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-.subtitle { color: var(--text-dim); margin-top: 15px; font-size: 1rem; }
-
-/* شبكة تصنيفات احترافية */
-.modes-grid { display: flex; flex-direction: column; gap: 20px; width: 85%; max-width: 360px; }
-
-.mode-card {
-    background: var(--card-bg); border: 1px solid rgba(255,255,255,0.05);
-    padding: 25px; border-radius: 24px; cursor: pointer; transition: 0.3s;
-    display: flex; align-items: center; justify-content: space-between; position: relative;
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
     overflow: hidden;
+    touch-action: none; /* لمنع التمرير أثناء اللعب */
 }
 
-.mode-card:hover { transform: translateY(-5px); border-color: var(--accent-cyan); background: #1e293b; }
-.mode-card .card-glow {
-    position: absolute; inset: 0; background: radial-gradient(circle at center, rgba(45, 212, 191, 0.1) 0%, transparent 70%);
-    opacity: 0; transition: opacity 0.3s;
+.game-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 400px;
 }
-.mode-card:hover .card-glow { opacity: 1; }
 
-.mode-name { display: block; font-size: 1.3rem; font-weight: bold; color: white; margin-bottom: 5px; }
-.mode-desc { font-size: 0.9rem; color: var(--text-dim); }
-
-.mode-preview { font-size: 2rem; position: relative; }
-.mini-block { width: 40px; height: 40px; border-radius: 8px; background: var(--accent-cyan); box-shadow: 0 0 15px var(--accent-cyan); }
-.art-icon { font-size: 2.5rem; }
-
-/* واجهة اللعب */
-.game-layout { display: flex; flex-direction: column; align-items: center; height: 100vh; padding-top: 20px; transition: 0.5s; opacity: 1; }
-.game-layout.hidden { opacity: 0; pointer-events: none; }
-
-.game-header {
-    display: flex; justify-content: space-between; width: 90%; max-width: 440px;
-    margin-bottom: 20px; background: rgba(22, 30, 49, 0.8); padding: 15px 25px;
-    border-radius: 20px; backdrop-filter: blur(10px);
+/* شريط المعلومات */
+.header {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    margin-bottom: 20px;
 }
-.score-pill { text-align: center; display: flex; flex-direction: column; align-items: center; }
-.score-pill .label { font-size: 0.7rem; color: var(--text-dim); }
-.score-pill span:not(.label) { font-size: 1.6rem; font-weight: 900; }
-.current { color: var(--accent-cyan); }
-.best { color: var(--accent-gold); }
-.crown-icon { font-size: 2rem; margin-bottom: 2px; }
 
-.canvas-wrapper { 
-    width: 90%; max-width: 420px; aspect-ratio: 1 / 1.5; 
-    background: #0d111c; border-radius: 25px; overflow: hidden;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+.stat-box {
+    background: var(--card-bg);
+    padding: 10px 15px;
+    border-radius: 12px;
+    text-align: center;
+    min-width: 80px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
-canvas { width: 100%; height: 100%; }
+
+.stat-box.highlight {
+    border: 2px solid var(--accent-color);
+}
+
+.label {
+    display: block;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
+
+.value {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* الكانفاس */
+canvas {
+    background-color: #0f172a;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+}
+
+/* نافذة Game Over */
+.modal {
+    display: none; /* مخفية افتراضياً */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(5px);
+    z-index: 10;
+    justify-content: center;
+    align-items: center;
+    border-radius: 16px;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 24px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: var(--danger-color);
+    font-size: 2rem;
+}
+
+.final-stats {
+    margin: 20px 0;
+    font-size: 1.2rem;
+}
+
+button {
+    background: var(--accent-color);
+    color: var(--bg-color);
+    border: none;
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+button:hover {
+    transform: scale(1.05);
+}
