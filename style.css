@@ -1,28 +1,38 @@
 :root {
-    --bg: #050b18;
-    --card: #121c2f;
+    --bg: #070b19;
+    --grid: #1a2333;
     --cyan: #2dd4bf;
     --gold: #fbbf24;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; }
-body { background: var(--bg); color: white; font-family: sans-serif; overflow: hidden; height: 100vh; }
+* { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; -webkit-tap-highlight-color: transparent; }
 
-.overlay { position: fixed; inset: 0; background: radial-gradient(circle, #1e293b, #050b18); display: flex; align-items: center; justify-content: center; z-index: 100; }
-.overlay.hidden { display: none; }
+body { 
+    font-family: 'Tajawal', sans-serif; background-color: var(--bg); 
+    /* خلفية متدرجة ديناميكية جديدة */
+    background: radial-gradient(circle at center, #1e293b 0%, #070b19 100%);
+    color: white; overflow: hidden; height: 100vh;
+}
 
-.mode-btn { width: 320px; padding: 18px; margin: 10px 0; border-radius: 15px; background: var(--card); border: 1px solid rgba(255,255,255,0.1); color: white; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-.btn-text { text-align: right; }
-.btn-text strong { display: block; font-size: 1.1rem; }
-.btn-text small { color: #94a3b8; font-size: 0.8rem; }
+.game-wrapper {
+    width: 100%; max-width: 420px; margin: 0 auto;
+    display: flex; flex-direction: column; height: 100%; padding: 20px 15px;
+}
 
-.game-wrapper { width: 100%; max-width: 400px; margin: 0 auto; padding: 15px; }
-.game-wrapper.hidden { display: none; }
+/* الشعار المحترف في الوسط */
+.game-logo-area { display: flex; justify-content: center; margin-bottom: 25px; }
+.logo-wrapper { position: relative; text-align: center; }
+.logo-text { 
+    font-size: 3.5rem; font-weight: 900; line-height: 0.8; margin-top: 15px;
+    background: linear-gradient(to bottom, #fff, #b7c4d7); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.gold-crown { font-size: 2.5rem; filter: drop-shadow(0 0 10px var(--gold)); }
+.glow-shadow { position: absolute; inset: 0; background: var(--cyan); filter: blur(30px); opacity: 0.2; z-index: -1; }
 
-.top-stats { display: flex; justify-content: space-between; margin-bottom: 15px; }
-.stat-pill { background: var(--card); padding: 10px 20px; border-radius: 12px; min-width: 120px; text-align: center; border-bottom: 3px solid transparent; }
-.best { border-color: var(--gold); color: var(--gold); }
-.current { border-color: var(--cyan); color: var(--cyan); font-weight: bold; font-size: 1.4rem; }
+.ui-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+.score-pill { background: #121c2f; padding: 12px 25px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
+.best { color: var(--gold); }
+.current { color: var(--cyan); font-weight: bold; font-size: 1.6rem; display: flex; align-items: center; gap: 8px; }
 
-.canvas-area { background: #0f172a; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); overflow: hidden; }
-canvas { display: block; width: 100%; }
+.board-container { background: rgba(0,0,0,0.3); border-radius: 25px; padding: 12px; backdrop-filter: blur(5px); }
+canvas { display: block; margin: 0 auto; width: 100%; }
