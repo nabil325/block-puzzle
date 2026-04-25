@@ -7,29 +7,48 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="mainMenu" class="menu-overlay active">
+    <div id="mainMenu" class="overlay active">
         <div class="menu-content">
-            <h1 class="logo">BLOCK<span>PUZZLE</span></h1>
-            <div class="modes-grid">
-                <button onclick="startGame('classic')">التصنيف الكلاسيكي</button>
-                <button onclick="startGame('puzzle')">نمط الألغاز (الموناليزا)</button>
+            <div class="logo-area">
+                <span class="crown-main">👑</span>
+                <h1>BLOCK<br>PUZZLE</h1>
+            </div>
+            <div class="modes-list">
+                <p>اختر نمط اللعب</p>
+                <button class="mode-btn" onclick="startGame('classic')">
+                    <div class="btn-text">
+                        <strong>التصنيف الكلاسيكي</strong>
+                        <small>نقاط بلا حدود وتحدي مستمر</small>
+                    </div>
+                    <div class="btn-icon">🟦</div>
+                </button>
+                <button class="mode-btn" onclick="startGame('puzzle')">
+                    <div class="btn-text">
+                        <strong>نمط الألغاز (الموناليزا)</strong>
+                        <small>اكشف اللوحات الفنية المخفية</small>
+                    </div>
+                    <div class="btn-icon">🖼️</div>
+                </button>
             </div>
         </div>
     </div>
 
-    <div class="game-ui">
-        <div class="stats-header">
+    <div id="gameScreen" class="game-wrapper hidden">
+        <div class="top-stats">
             <div class="stat-pill best">
                 <small>أفضل نتيجة</small>
                 <span id="highScoreVal">1950</span>
             </div>
             <div class="stat-pill current">
                 <span id="scoreVal">0</span>
-                <span class="crown">👑</span>
+                <span class="mini-crown">👑</span>
             </div>
         </div>
-        <canvas id="gameCanvas"></canvas>
+        <div class="canvas-area">
+            <canvas id="gameCanvas"></canvas>
+        </div>
     </div>
+
     <script src="game.js"></script>
 </body>
 </html>
