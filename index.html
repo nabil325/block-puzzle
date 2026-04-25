@@ -1,107 +1,47 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Block Puzzle - لعبة البلوك الاحترافية</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Elite Block Puzzle</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Main Menu Screen -->
-    <div id="mainMenu" class="screen active">
-        <div class="menu-container">
-            <div class="crown-icon">👑</div>
-            <h1 class="game-title">
-                <span class="title-block">BLOCK</span>
-                <span class="title-puzzle">PUZZLE</span>
-            </h1>
-            <div class="menu-buttons">
-                <button class="btn btn-primary" onclick="startGame('classic')">
-                    <span class="btn-icon">🎯</span>
-                    <span class="btn-text">التصنيف الكلاسيكي</span>
+    <div id="mainMenu" class="overlay active">
+        <div class="menu-content">
+            <div class="logo-container">
+                <span class="crown-icon">👑</span>
+                <h1 class="main-title">BLOCK<br>PUZZLE</h1>
+            </div>
+            
+            <div class="modes-selection">
+                <p class="select-text">اختر نمط اللعب</p>
+                <button class="mode-btn classic" onclick="startGame('classic')">
+                    <span>التصنيف الكلاسيكي</span>
+                    <small>نقاط بلا حدود وتحدي مستمر</small>
                 </button>
-                <button class="btn btn-secondary" onclick="startGame('mona')">
-                    <span class="btn-icon">🎨</span>
-                    <span class="btn-text">نمط الألغاز</span>
-                </button>
-            </div>
-            <div class="menu-footer">
-                <p class="high-score-display">
-                    <span class="high-score-label">أفضل نتيجة:</span>
-                    <span id="menuHighScore" class="high-score-value">0</span>
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Game Screen -->
-    <div id="gameScreen" class="screen">
-        <div class="game-container">
-            <!-- Header -->
-            <div class="game-header">
-                <button class="btn-back" onclick="backToMenu()">←</button>
-                <div class="score-section">
-                    <div class="score-box">
-                        <span class="score-label">النقاط</span>
-                        <span id="currentScore" class="score-value">0</span>
-                    </div>
-                    <div class="score-box">
-                        <span class="score-label">الأفضل</span>
-                        <span id="bestScore" class="score-value">0</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Game Board -->
-            <div class="game-board-wrapper">
-                <canvas id="gameCanvas" class="game-canvas"></canvas>
-            </div>
-
-            <!-- Next Pieces Preview -->
-            <div class="next-pieces-section">
-                <p class="next-pieces-label">القطع القادمة</p>
-                <div class="next-pieces-container">
-                    <div id="piece0" class="next-piece"></div>
-                    <div id="piece1" class="next-piece"></div>
-                    <div id="piece2" class="next-piece"></div>
-                </div>
-            </div>
-
-            <!-- Controls -->
-            <div class="game-controls">
-                <button class="btn btn-secondary" onclick="rotateNextPiece()">
-                    <span>🔄 تدوير</span>
-                </button>
-                <button class="btn btn-danger" onclick="undoMove()">
-                    <span>↶ تراجع</span>
+                <button class="mode-btn puzzle" onclick="startGame('puzzle')">
+                    <span>نمط الألغاز (الموناليزا)</span>
+                    <small>اكشف اللوحات الفنية المخفية</small>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Game Over Modal -->
-    <div id="gameOverModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span class="modal-title">انتهت اللعبة!</span>
+    <div id="gameScreen" class="game-container hidden">
+        <div class="top-bar">
+            <div class="stat-box current-score">
+                <span class="icon">👑</span>
+                <span id="scoreVal">0</span>
             </div>
-            <div class="modal-body">
-                <div class="final-score">
-                    <p class="final-score-label">نقاطك النهائية</p>
-                    <p id="finalScore" class="final-score-value">0</p>
-                </div>
-                <div class="best-score-info">
-                    <p id="bestScoreInfo" class="best-score-text"></p>
-                </div>
+            <div class="stat-box high-score">
+                <small>أفضل نتيجة</small>
+                <span id="highScoreVal">1950</span>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="backToMenu()">
-                    <span>الرئيسية</span>
-                </button>
-                <button class="btn btn-primary" onclick="restartGame()">
-                    <span>لعبة جديدة</span>
-                </button>
-            </div>
+        </div>
+        
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas"></canvas>
         </div>
     </div>
 
