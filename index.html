@@ -3,49 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Block Puzzle</title>
+    <title>Neon Block Puzzle Pro</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="mainMenu" class="overlay active">
-        <div class="menu-content">
-            <div class="logo-area">
-                <span class="crown-main">👑</span>
-                <h1>BLOCK<br>PUZZLE</h1>
+    <div class="game-header">
+        <div class="score-container">
+            <div class="score-box">
+                <div class="score-label">النقاط</div>
+                <div id="currentScore" class="score-value">0</div>
             </div>
-            <div class="modes-list">
-                <p>اختر نمط اللعب</p>
-                <button class="mode-btn" onclick="startGame('classic')">
-                    <div class="btn-text">
-                        <strong>التصنيف الكلاسيكي</strong>
-                        <small>نقاط بلا حدود وتحدي مستمر</small>
-                    </div>
-                    <div class="btn-icon">🟦</div>
-                </button>
-                <button class="mode-btn" onclick="startGame('puzzle')">
-                    <div class="btn-text">
-                        <strong>نمط الألغاز (الموناليزا)</strong>
-                        <small>اكشف اللوحات الفنية المخفية</small>
-                    </div>
-                    <div class="btn-icon">🖼️</div>
-                </button>
+            <div class="score-box">
+                <div class="score-label">الأفضل</div>
+                <div id="bestScore" class="score-value">0</div>
             </div>
         </div>
+        <button class="btn-reset" onclick="resetGame()">🔄 جديد</button>
     </div>
 
-    <div id="gameScreen" class="game-wrapper hidden">
-        <div class="top-stats">
-            <div class="stat-pill best">
-                <small>أفضل نتيجة</small>
-                <span id="highScoreVal">1950</span>
-            </div>
-            <div class="stat-pill current">
-                <span id="scoreVal">0</span>
-                <span class="mini-crown">👑</span>
-            </div>
-        </div>
-        <div class="canvas-area">
-            <canvas id="gameCanvas"></canvas>
+    <div id="board" class="game-board"></div>
+    <div id="piecesContainer" class="pieces-container"></div>
+
+    <div id="gameOver" class="game-over-overlay">
+        <div class="game-over-content">
+            <h2>انتهت اللعبة! 🏁</h2>
+            <p id="finalScoreText">لقد جمعت 0 نقطة</p>
+            <button class="btn-reset" onclick="resetGame()">إعادة محاولة</button>
         </div>
     </div>
 
