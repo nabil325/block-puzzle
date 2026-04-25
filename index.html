@@ -2,46 +2,36 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Elite Block Puzzle</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Elite Block Puzzle: HQ</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div id="mainMenu" class="overlay active">
-        <div class="menu-content">
-            <div class="logo-area">
-                <span class="crown-main">👑</span>
-                <h1>BLOCK<br>PUZZLE</h1>
+    <div class="game-wrapper">
+        <header class="game-logo-area">
+            <div class="logo-wrapper">
+                <span class="gold-crown">👑</span>
+                <h1 class="logo-text">BLOCK<br>PUZZLE</h1>
+                <div class="glow-shadow"></div>
             </div>
-            <div class="modes-list">
-                <button class="mode-btn" onclick="startGame('classic')">
-                    <div class="btn-text"><strong>التصنيف الكلاسيكي</strong><small>تحدي النقاط المستمر</small></div>
-                    <span>🟦</span>
-                </button>
-                <button class="mode-btn" onclick="startGame('puzzle')">
-                    <div class="btn-text"><strong>نمط الألغاز (الموناليزا)</strong><small>اكشف اللوحات المخفية</small></div>
-                    <span>🖼️</span>
-                </button>
-            </div>
-        </div>
-    </div>
+        </header>
 
-    <div id="gameScreen" class="game-wrapper hidden">
-        <div class="top-stats">
-            <div class="stat-pill best">
+        <div class="ui-header">
+            <div class="score-pill best">
                 <small>أفضل نتيجة</small>
-                <span id="highScoreVal">1950</span>
+                <div id="highScoreVal">1950</div>
             </div>
-            <div class="stat-pill current">
-                <span id="scoreVal">0</span>
-                <span class="mini-crown">👑</span>
+            <div class="score-pill current">
+                <div id="scoreVal">0</div>
+                <span class="score-crown">👑</span>
             </div>
         </div>
-        <div class="canvas-area">
+
+        <div class="board-container">
             <canvas id="gameCanvas"></canvas>
         </div>
     </div>
-
     <script src="game.js"></script>
 </body>
 </html>
