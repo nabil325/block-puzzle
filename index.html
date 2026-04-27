@@ -1,37 +1,14 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Elite Block Puzzle: HQ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Block Blast Pro - AI Edition</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 </head>
 <body>
-    <div class="game-wrapper">
-        <header class="game-logo-area">
-            <div class="logo-wrapper">
-                <span class="gold-crown">👑</span>
-                <h1 class="logo-text">BLOCK<br>PUZZLE</h1>
-                <div class="glow-shadow"></div>
-            </div>
-        </header>
-
-        <div class="ui-header">
-            <div class="score-pill best">
-                <small>أفضل نتيجة</small>
-                <div id="highScoreVal">1950</div>
-            </div>
-            <div class="score-pill current">
-                <div id="scoreVal">0</div>
-                <span class="score-crown">👑</span>
-            </div>
-        </div>
-
-        <div class="board-container">
-            <canvas id="gameCanvas"></canvas>
-        </div>
-    </div>
+    <div id="game-container"></div>
     <script src="game.js"></script>
 </body>
 </html>
