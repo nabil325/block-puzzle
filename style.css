@@ -1,38 +1,19 @@
-:root {
-    --bg: #070b19;
-    --grid: #1a2333;
-    --cyan: #2dd4bf;
-    --gold: #fbbf24;
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #0b0f19;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+    touch-action: none; /* ضروري جداً لمنع تعليق المتصفح أثناء السحب */
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; -webkit-tap-highlight-color: transparent; }
-
-body { 
-    font-family: 'Tajawal', sans-serif; background-color: var(--bg); 
-    /* خلفية متدرجة ديناميكية جديدة */
-    background: radial-gradient(circle at center, #1e293b 0%, #070b19 100%);
-    color: white; overflow: hidden; height: 100vh;
+#game-container {
+    border-radius: 16px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.7);
+    border: 2px solid #1e293b;
+    overflow: hidden;
 }
-
-.game-wrapper {
-    width: 100%; max-width: 420px; margin: 0 auto;
-    display: flex; flex-direction: column; height: 100%; padding: 20px 15px;
-}
-
-/* الشعار المحترف في الوسط */
-.game-logo-area { display: flex; justify-content: center; margin-bottom: 25px; }
-.logo-wrapper { position: relative; text-align: center; }
-.logo-text { 
-    font-size: 3.5rem; font-weight: 900; line-height: 0.8; margin-top: 15px;
-    background: linear-gradient(to bottom, #fff, #b7c4d7); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-}
-.gold-crown { font-size: 2.5rem; filter: drop-shadow(0 0 10px var(--gold)); }
-.glow-shadow { position: absolute; inset: 0; background: var(--cyan); filter: blur(30px); opacity: 0.2; z-index: -1; }
-
-.ui-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
-.score-pill { background: #121c2f; padding: 12px 25px; border-radius: 18px; border: 1px solid rgba(255,255,255,0.05); text-align: center; }
-.best { color: var(--gold); }
-.current { color: var(--cyan); font-weight: bold; font-size: 1.6rem; display: flex; align-items: center; gap: 8px; }
-
-.board-container { background: rgba(0,0,0,0.3); border-radius: 25px; padding: 12px; backdrop-filter: blur(5px); }
-canvas { display: block; margin: 0 auto; width: 100%; }
