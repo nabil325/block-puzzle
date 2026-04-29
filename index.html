@@ -1,14 +1,60 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Block Blast Pro - AI Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Elite Block Puzzle</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
 </head>
 <body>
-    <div id="game-container"></div>
+    <div id="mainMenu" class="overlay active">
+        <div class="menu-container">
+            <div class="game-logo">
+                <div class="crown-icon">👑</div>
+                <h1>BLOCK<br>PUZZLE</h1>
+            </div>
+            <div class="menu-buttons">
+                <button class="mode-btn classic" onclick="startGame('classic')">
+                    <div class="btn-info">
+                        <strong>التصنيف الكلاسيكي</strong>
+                        <small>تحدي النقاط المستمر</small>
+                    </div>
+                    <span class="btn-emoji">🟦</span>
+                </button>
+                <button class="mode-btn puzzle" onclick="startGame('puzzle')">
+                    <div class="btn-info">
+                        <strong>نمط الألغاز (الموناليزا)</strong>
+                        <small>اكتشف اللوحات المخفية</small>
+                    </div>
+                    <span class="btn-emoji">🖼️</span>
+                </button>
+            </div>
+            <div class="menu-footer">
+                <p>أفضل نتيجة: <span id="bestScoreMenu">1950</span></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="gameScreen" class="game-wrapper hidden">
+        <div class="game-header">
+            <div class="stat-pill best">
+                <small>أفضل نتيجة</small>
+                <span id="highScoreVal">1950</span>
+            </div>
+            <div class="stat-pill current">
+                <span id="scoreVal">0</span>
+                <span class="mini-crown">👑</span>
+            </div>
+        </div>
+        
+        <div class="board-area">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+
+        <div id="piecesPreview" class="pieces-tray"></div>
+    </div>
+
     <script src="game.js"></script>
 </body>
 </html>
